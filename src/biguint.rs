@@ -8,7 +8,7 @@ mod cmp;
 mod convert;
 mod convert_data;
 mod set_val;
-mod strings;
+mod str;
 
 pub use arithmetic::*;
 

@@ -1,5 +1,8 @@
 use core::iter;
-use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Shl, ShlAssign, Shr, ShrAssign};
+use core::ops::{
+	BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
+	ShrAssign,
+};
 
 use crate::biguint::BigUInt;
 use crate::util::VecExt;
@@ -171,6 +174,48 @@ impl BitOr<BigUInt> for &BigUInt {
 	fn bitor(self, mut rhs: BigUInt) -> Self::Output {
 		rhs |= self;
 		rhs
+	}
+}
+
+impl BitXorAssign<&BigUInt> for BigUInt {
+	fn bitxor_assign(&mut self, rhs: &BigUInt) {
+		for (x, y) in iter::zip(self.data.iter_mut(), rhs.data.iter()) {
+			*x ^= y;
+		}
+		if rhs.len() > self.len() {
+			self.data.extend(rhs.data[self.len()..].iter().copied());
+		}
+		self.truncate_leading();
+	}
+}
+
+impl BitXor<&BigUInt> for BigUInt {
+	type Output = BigUInt;
+
+	fn bitxor(mut self, rhs: &BigUInt) -> Self::Output {
+		self ^= rhs;
+		self
+	}
+}
+
+impl BitXor<BigUInt> for &BigUInt {
+	type Output = BigUInt;
+
+	fn bitxor(self, mut rhs: BigUInt) -> Self::Output {
+		rhs ^= self;
+		rhs
+	}
+}
+
+impl Not for BigUInt {
+	type Output = BigUInt;
+
+	fn not(mut self) -> Self::Output {
+		for x in self.data.iter_mut() {
+			*x = !*x;
+		}
+		self.truncate_leading();
+		self
 	}
 }
 
