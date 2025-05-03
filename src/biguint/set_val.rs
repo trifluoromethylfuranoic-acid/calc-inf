@@ -1,9 +1,8 @@
-
-use crate::{SetVal, TrySetVal};
-use crate::biguint::BigUInt;
-use crate::util;
-use crate::error::TryFromIntError;
 use core::convert::TryInto;
+
+use crate::biguint::BigUInt;
+use crate::error::TryFromIntError;
+use crate::{util, SetVal, TrySetVal};
 
 macro_rules! impl_set_val_u {
 	($($t:ty),*) => {
@@ -33,12 +32,16 @@ impl SetVal<u128> for BigUInt {
 impl SetVal<usize> for BigUInt {
 	fn set_val(&mut self, src: usize) {
 		#[cfg(target_pointer_width = "16")]
-			let val = src as u16;
+		let val = src as u16;
 		#[cfg(target_pointer_width = "32")]
-			let val = src as u32;
+		let val = src as u32;
 		#[cfg(target_pointer_width = "64")]
-			let val = src as u64;
-		#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64", target_pointer_width = "16")))]
+		let val = src as u64;
+		#[cfg(not(any(
+			target_pointer_width = "32",
+			target_pointer_width = "64",
+			target_pointer_width = "16"
+		)))]
 		compile_error!("This crate only supports 16, 32 and 64 bit targets.");
 		self.data.clear();
 		if val != 0u64 {
@@ -72,7 +75,7 @@ impl_try_set_val_i! { i8 => u8, i16 => u16, i32 => u32, i64 => u64, i128 => u128
 impl Clone for BigUInt {
 	fn clone(&self) -> Self {
 		Self {
-			data: self.data.clone()
+			data: self.data.clone(),
 		}
 	}
 

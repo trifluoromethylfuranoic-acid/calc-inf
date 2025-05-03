@@ -1,4 +1,5 @@
 use core::str::FromStr;
+
 use crate::biguint::BigUInt;
 use crate::error::ParseIntError;
 use crate::SetVal;
@@ -20,7 +21,7 @@ impl BigUInt {
 		if src[0] == b'-' {
 			return Err(ParseIntError::Negative);
 		}
-		
+
 		if src[0] == b'+' {
 			src = src.split_at(1).1;
 		}
@@ -38,22 +39,24 @@ impl BigUInt {
 		if src.is_empty() {
 			return Err(ParseIntError::Empty);
 		}
-		
+
 		// Magic number is approximate ratio between len of integer in base 10 and base 2^64
 		let expected_cap = src.len() / 19 + 1;
-		
+
 		let mut res = Self::ZERO;
 		res.data.grow(expected_cap);
-		
+
 		let mut power_of_10 = BigUInt::from(1u64);
 		power_of_10.data.grow(expected_cap);
-		
+
 		// To reduce allocations
 		let mut tmp = Self::ZERO;
 		tmp.data.grow(expected_cap);
-		
+
 		for &c in src.iter().rev() {
-			let d = parse_ascii_digit(c).ok_or(ParseIntError::InvalidDigit)?.into();
+			let d = parse_ascii_digit(c)
+				.ok_or(ParseIntError::InvalidDigit)?
+				.into();
 			tmp.mul_to(&d, &power_of_10);
 			res += &tmp;
 			tmp.mul_to(&power_of_10, &10u64.into());
@@ -68,13 +71,23 @@ impl BigUInt {
 mod tests {
 	use alloc::string::ToString;
 	use core::assert_matches::assert_matches;
+
 	use super::*;
-	
+
 	#[test]
 	fn test_from_str() {
-		assert_eq!(BigUInt::from_str("435453453453123211").unwrap(), BigUInt::from(435453453453123211u64));
-		assert_eq!(BigUInt::from_str(&u128::MAX.to_string()).unwrap(), BigUInt::from(u128::MAX));
-		assert_eq!(BigUInt::from_str("+999999999").unwrap(), BigUInt::from(999999999u64));
+		assert_eq!(
+			BigUInt::from_str("435453453453123211").unwrap(),
+			BigUInt::from(435453453453123211u64)
+		);
+		assert_eq!(
+			BigUInt::from_str(&u128::MAX.to_string()).unwrap(),
+			BigUInt::from(u128::MAX)
+		);
+		assert_eq!(
+			BigUInt::from_str("+999999999").unwrap(),
+			BigUInt::from(999999999u64)
+		);
 		assert_matches!(BigUInt::from_str("-999999999"), Err(_));
 		assert_matches!(BigUInt::from_str("684684g68486"), Err(_));
 		assert_matches!(BigUInt::from_str(""), Err(_));

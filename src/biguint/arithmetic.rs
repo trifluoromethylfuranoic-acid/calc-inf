@@ -1,6 +1,7 @@
+use core::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+
 use crate::biguint::BigUInt;
 use crate::util::{carrying_mul, VecExt};
-use core::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
 pub trait Arithmetic<T> {
 	fn checked_sub(self, rhs: T) -> Option<BigUInt>;
@@ -9,11 +10,7 @@ pub trait Arithmetic<T> {
 impl Arithmetic<&BigUInt> for BigUInt {
 	fn checked_sub(mut self, rhs: &BigUInt) -> Option<BigUInt> {
 		let succ = self.checked_sub_assign(rhs);
-		if succ {
-			Some(self)
-		} else {
-			None
-		}
+		if succ { Some(self) } else { None }
 	}
 }
 
@@ -59,7 +56,7 @@ impl BigUInt {
 			for (j, &b_j) in rhs.data.iter().enumerate() {
 				let (lo, hi) = carrying_mul(a_i, b_j);
 				let (sum1, carry1) = lo.overflowing_add(carry);
-				let (sum2, carry2) = self[i+j].overflowing_add(sum1);
+				let (sum2, carry2) = self[i + j].overflowing_add(sum1);
 				self.data[i + j] = sum2;
 				// Can't overflow because magic
 				// u64 * u64 + u64 + u64 fits in 2 u64s
@@ -73,11 +70,11 @@ impl BigUInt {
 	/// Returns false and leaves garbage in self on overflow.
 	fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
 		let mut borrow = 0u64;
-        let len = if self.len() >= rhs.len() {
-	        self.len()
-        } else {
-	        return false;
-        };
+		let len = if self.len() >= rhs.len() {
+			self.len()
+		} else {
+			return false;
+		};
 		for i in 0..len {
 			let a = self.data[i];
 			let b = rhs.data.get_or_default(i);
@@ -111,7 +108,7 @@ impl BigUInt {
 		borrow == 0
 	}
 
-	fn add_to_pos(&mut self, mut i: usize, n: u64) {
+	pub fn add_to_pos(&mut self, mut i: usize, n: u64) {
 		let (mut res, mut carry) = self[i].overflowing_add(n);
 		self.data[i] = res;
 		while carry {
@@ -123,21 +120,21 @@ impl BigUInt {
 }
 
 impl AddAssign<&Self> for BigUInt {
-    fn add_assign(&mut self, rhs: &Self) {
-        let mut carry = 0u64;
-        let len = usize::max(self.len(), rhs.len());
-        for i in 0..len {
-            let a = self.data.get_or_default(i);
-            let b = rhs.data.get_or_default(i);
-            let (sum1, carry1) = a.overflowing_add(b);
-            let (sum2, carry2) = sum1.overflowing_add(carry);
-            self.data.set_or_insert(i, sum2);
-            carry = carry1 as u64 + carry2 as u64;
-        }
-        if carry != 0 {
-            self.data.set_or_insert(len, carry);
-        }
-    }
+	fn add_assign(&mut self, rhs: &Self) {
+		let mut carry = 0u64;
+		let len = usize::max(self.len(), rhs.len());
+		for i in 0..len {
+			let a = self.data.get_or_default(i);
+			let b = rhs.data.get_or_default(i);
+			let (sum1, carry1) = a.overflowing_add(b);
+			let (sum2, carry2) = sum1.overflowing_add(carry);
+			self.data.set_or_insert(i, sum2);
+			carry = carry1 as u64 + carry2 as u64;
+		}
+		if carry != 0 {
+			self.data.set_or_insert(len, carry);
+		}
+	}
 }
 
 macro_rules! impl_add_assign_u {
@@ -172,21 +169,21 @@ macro_rules! impl_add_assign_i {
 impl_add_assign_i! { i8, i16, i32, i64, i128, isize }
 
 impl Add<&BigUInt> for BigUInt {
-    type Output = BigUInt;
+	type Output = BigUInt;
 
-    fn add(mut self, rhs: &BigUInt) -> Self::Output {
-        self += rhs;
-        self
-    }
+	fn add(mut self, rhs: &BigUInt) -> Self::Output {
+		self += rhs;
+		self
+	}
 }
 
 impl Add<BigUInt> for &BigUInt {
-    type Output = BigUInt;
+	type Output = BigUInt;
 
-    fn add(self, mut rhs: BigUInt) -> Self::Output {
-        rhs += self;
-        rhs
-    }
+	fn add(self, mut rhs: BigUInt) -> Self::Output {
+		rhs += self;
+		rhs
+	}
 }
 
 macro_rules! impl_add_u {
@@ -234,7 +231,6 @@ macro_rules! impl_add_i {
 }
 
 impl_add_i! { i8, i16, i32, i64, i128, isize }
-
 
 impl SubAssign<&BigUInt> for BigUInt {
 	fn sub_assign(&mut self, rhs: &BigUInt) {
@@ -412,12 +408,12 @@ macro_rules! impl_mul_assign {
 }
 
 impl_mul_assign! { u8, u16, u32, u64, u128, usize, &BigUInt,
-                   i8, i16, i32, i64, i128, isize}
+i8, i16, i32, i64, i128, isize}
 
 #[cfg(test)]
 mod tests {
-	use crate::util::{from_foreign_biguint, to_foreign_biguint};
 	use super::*;
+	use crate::util::{from_foreign_biguint, to_foreign_biguint};
 	#[test]
 	fn test_add() {
 		let mut u64_max_plus_one = BigUInt::from(u64::MAX);
@@ -450,29 +446,30 @@ mod tests {
 
 	#[test]
 	fn test_mul() {
-		mul_helper(BigUInt::from_vec_le(vec![
-			6848468468486468486,
-			6851351684844315148,
-			87951463548843415,
-			6848468135153
-		]), BigUInt::from_vec_le(vec![
-			486468153601531,
-			484684416531315,
-			468431513584864,
-			84686484684864
-		]));
+		mul_helper(
+			BigUInt::from_vec_le(vec![
+				6848468468486468486,
+				6851351684844315148,
+				87951463548843415,
+				6848468135153,
+			]),
+			BigUInt::from_vec_le(vec![
+				486468153601531,
+				484684416531315,
+				468431513584864,
+				84686484684864,
+			]),
+		);
 
-		mul_helper(BigUInt::from_vec_le(vec![
-			u64::MAX - 10,
-			u64::MAX,
-			u64::MAX - 1,
-			u64::MAX - 4564564
-		]), BigUInt::from_vec_le(vec![
-			u64::MAX - 1,
-			u64::MAX - 156456,
-			u64::MAX,
-			u64::MAX
-		]));
+		mul_helper(
+			BigUInt::from_vec_le(vec![
+				u64::MAX - 10,
+				u64::MAX,
+				u64::MAX - 1,
+				u64::MAX - 4564564,
+			]),
+			BigUInt::from_vec_le(vec![u64::MAX - 1, u64::MAX - 156456, u64::MAX, u64::MAX]),
+		);
 
 		mul_helper(BigUInt::from(u128::MAX), BigUInt::from(u128::MAX));
 	}

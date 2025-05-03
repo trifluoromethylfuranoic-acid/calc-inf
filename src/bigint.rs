@@ -1,6 +1,7 @@
-use smallvec::SmallVec;
-use core::ops::Index;
 use alloc::vec::Vec;
+use core::ops::Index;
+
+use smallvec::SmallVec;
 
 type Data = SmallVec<[u64; 2]>;
 
@@ -11,12 +12,16 @@ pub struct BigInt {
 	// Two's complement
 	// Invariant: non-empty
 	// Invariant: minimum leading zeros/ones
-	data: Data
+	data: Data,
 }
 
 impl BigInt {
-	pub const ZERO: Self = Self { data: unsafe { SmallVec::from_const_with_len_unchecked([0u64; 2], 1) } };
-	pub const ONE : Self = Self { data: unsafe { SmallVec::from_const_with_len_unchecked([1u64; 2], 1) } };
+	pub const ZERO: Self = Self {
+		data: unsafe { SmallVec::from_const_with_len_unchecked([0u64; 2], 1) },
+	};
+	pub const ONE: Self = Self {
+		data: unsafe { SmallVec::from_const_with_len_unchecked([1u64; 2], 1) },
+	};
 
 	/// Length of underlying storage, in units of mem::sizeof::<u64>()
 	pub fn len(&self) -> usize {
@@ -31,7 +36,9 @@ impl BigInt {
 	/// Creates a bigint from a SmallVec<[u64; 2]>, which stores its digits in little-endian.
 	/// Empty vector corresponds to 0.
 	pub fn from_smallvec_le(mut data: SmallVec<[u64; 2]>) -> Self {
-		if data.is_empty() { data.push(0u64) }
+		if data.is_empty() {
+			data.push(0u64)
+		}
 		let mut res = Self { data };
 		res.truncate_leading();
 		res
@@ -71,7 +78,9 @@ impl BigInt {
 		let leading_bit_ = leading_bit(self[self.len() - 1]);
 		let leading_bit_repeated = if leading_bit_ == 0 { 0u64 } else { u64::MAX };
 		while self.len() > 1 {
-			if self[self.len() - 1] == leading_bit_repeated && leading_bit(self[self.len() - 2]) == leading_bit_ {
+			if self[self.len() - 1] == leading_bit_repeated
+				&& leading_bit(self[self.len() - 2]) == leading_bit_
+			{
 				self.data.pop();
 			} else {
 				break;
@@ -108,10 +117,10 @@ impl_from_i! { i8, i16, i32, i64, u8, u16, u32 }
 impl From<i128> for BigInt {
 	fn from(value: i128) -> Self {
 		let bytes = value.to_le_bytes();
-		let lo = u64::from_le_bytes(bytes[0..8] .try_into().unwrap());
+		let lo = u64::from_le_bytes(bytes[0..8].try_into().unwrap());
 		let hi = u64::from_le_bytes(bytes[8..16].try_into().unwrap());
 		let mut res = Self {
-			data: smallvec![lo, hi]
+			data: smallvec![lo, hi],
 		};
 		res.truncate_leading();
 		res
@@ -121,13 +130,17 @@ impl From<i128> for BigInt {
 impl From<isize> for BigInt {
 	fn from(value: isize) -> Self {
 		#[cfg(target_pointer_width = "16")]
-			let value = value as i16;
+		let value = value as i16;
 		#[cfg(target_pointer_width = "32")]
-			let value = value as i32;
+		let value = value as i32;
 		#[cfg(target_pointer_width = "64")]
-			let value = value as i64;
-		#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64", target_pointer_width = "16")))]
-			compile_error!("This crate only supports 16, 32 and 64 bit targets.");
+		let value = value as i64;
+		#[cfg(not(any(
+			target_pointer_width = "32",
+			target_pointer_width = "64",
+			target_pointer_width = "16"
+		)))]
+		compile_error!("This crate only supports 16, 32 and 64 bit targets.");
 		value.into()
 	}
 }
@@ -139,7 +152,7 @@ impl From<u64> for BigInt {
 				smallvec![value]
 			} else {
 				smallvec![value, 0u64]
-			}
+			},
 		}
 	}
 }
@@ -147,11 +160,14 @@ impl From<u64> for BigInt {
 impl From<u128> for BigInt {
 	fn from(value: u128) -> Self {
 		let bytes = value.to_le_bytes();
-		let lo = u64::from_le_bytes(bytes[0..8] .try_into().unwrap());
+		let lo = u64::from_le_bytes(bytes[0..8].try_into().unwrap());
 		let hi = u64::from_le_bytes(bytes[8..16].try_into().unwrap());
 		let mut res = Self {
-			data: if leading_bit(hi) == 0 { smallvec![lo, hi] }
-			else { smallvec![lo, hi, 0u64] }
+			data: if leading_bit(hi) == 0 {
+				smallvec![lo, hi]
+			} else {
+				smallvec![lo, hi, 0u64]
+			},
 		};
 		res.truncate_leading();
 		res
@@ -161,13 +177,17 @@ impl From<u128> for BigInt {
 impl From<usize> for BigInt {
 	fn from(value: usize) -> Self {
 		#[cfg(target_pointer_width = "16")]
-			let value = value as u16;
+		let value = value as u16;
 		#[cfg(target_pointer_width = "32")]
-			let value = value as u32;
+		let value = value as u32;
 		#[cfg(target_pointer_width = "64")]
-			let value = value as u64;
-		#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64", target_pointer_width = "16")))]
-			compile_error!("This crate only supports 16, 32 and 64 bit targets.");
+		let value = value as u64;
+		#[cfg(not(any(
+			target_pointer_width = "32",
+			target_pointer_width = "64",
+			target_pointer_width = "16"
+		)))]
+		compile_error!("This crate only supports 16, 32 and 64 bit targets.");
 		value.into()
 	}
 }

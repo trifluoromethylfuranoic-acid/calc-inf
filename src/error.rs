@@ -1,5 +1,5 @@
-use core::fmt::Display;
 use core::error::Error;
+use core::fmt::Display;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum ParseIntError {
@@ -10,15 +10,19 @@ pub enum ParseIntError {
 
 impl Display for ParseIntError {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		write!(f, "{}", match self {
-			ParseIntError::Empty => "cannot parse integer from empty string",
-			ParseIntError::InvalidDigit => "invalid digit found in string",
-			ParseIntError::Negative => "can't construct BigUInt from a negative value",
-		})
+		write!(
+			f,
+			"{}",
+			match self {
+				ParseIntError::Empty => "cannot parse integer from empty string",
+				ParseIntError::InvalidDigit => "invalid digit found in string",
+				ParseIntError::Negative => "can't construct BigUInt from a negative value",
+			}
+		)
 	}
 }
 
-impl Error for ParseIntError{}
+impl Error for ParseIntError {}
 
 #[derive(Default, Debug, Eq, PartialEq)]
 pub struct TryFromIntError;

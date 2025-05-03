@@ -1,6 +1,8 @@
-use crate::biguint::BigUInt;
 use core::iter;
 use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Shl, ShlAssign, Shr, ShrAssign};
+
+use crate::biguint::BigUInt;
+use crate::util::VecExt;
 use crate::SetVal;
 
 macro_rules! impl_shl {
@@ -16,8 +18,7 @@ macro_rules! impl_shl {
 	)*}
 }
 
-impl_shl! { u8, u16, u32, u64, u128, usize,
-            i8, i16, i32, i64, i128, isize }
+impl_shl! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
 
 macro_rules! impl_shl_assign {
     ($($t:ty),*) => {$(
@@ -36,7 +37,7 @@ macro_rules! impl_shl_assign {
 				let rem    = (rhs % (BITS as $t)) as u64;
 
 				let old_len = self.len();
-				self.data.extend(iter::repeat_n(0u64, mult64));
+				self.data.extend_zero(mult64);
 
 				// Shift by mult64 u64s
 				self.data.copy_within(0..old_len, mult64);
@@ -55,13 +56,12 @@ macro_rules! impl_shl_assign {
 						self.data.push(carry);
 					}
 				}
-		    }
-	    }
-    )*}
+			}
+		}
+	)*}
 }
 
-impl_shl_assign! { u8, u16, u32, u64, u128, usize,
-                   i8, i16, i32, i64, i128, isize }
+impl_shl_assign! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
 
 macro_rules! impl_shr {
 	($($t:ty),*) => {$(
@@ -76,14 +76,13 @@ macro_rules! impl_shr {
 	)*}
 }
 
-impl_shr! { u8, u16, u32, u64, u128, usize,
-            i8, i16, i32, i64, i128, isize }
+impl_shr! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
 
 macro_rules! impl_shr_assign {
-    ($($t:ty),*) => {$(
-        impl ShrAssign<$t> for BigUInt {
-	        fn shr_assign(&mut self, rhs: $t) {
-		        #[allow(unused_comparisons)]
+	($($t:ty),*) => {$(
+		impl ShrAssign<$t> for BigUInt {
+			fn shr_assign(&mut self, rhs: $t) {
+				#[allow(unused_comparisons)]
 				let is_non_negative = rhs >= 0;
 				assert!(is_non_negative, "attempt to bitshift right by negative amount: {rhs}");
 
@@ -110,13 +109,12 @@ macro_rules! impl_shr_assign {
 						self.data.pop();
 					}
 				}
-            }
-        }
-    )*}
+			}
+		}
+	)*}
 }
 
-impl_shr_assign! { u8, u16, u32, u64, u128, usize,
-                   i8, i16, i32, i64, i128, isize }
+impl_shr_assign! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
 
 impl BitAndAssign<&BigUInt> for BigUInt {
 	fn bitand_assign(&mut self, rhs: &BigUInt) {
@@ -138,8 +136,20 @@ impl BitAnd<&BigUInt> for BigUInt {
 	}
 }
 
+impl BitAnd<BigUInt> for &BigUInt {
+	type Output = BigUInt;
+
+	fn bitand(self, mut rhs: BigUInt) -> Self::Output {
+		rhs &= self;
+		rhs
+	}
+}
+
 impl BitOrAssign<&BigUInt> for BigUInt {
 	fn bitor_assign(&mut self, rhs: &BigUInt) {
+		if rhs.len() > self.len() {
+			self.data.extend_zero(rhs.len() - self.len());
+		}
 		for (x, y) in iter::zip(self.data.iter_mut(), rhs.data.iter()) {
 			*x |= y;
 		}
@@ -155,30 +165,39 @@ impl BitOr<&BigUInt> for BigUInt {
 	}
 }
 
+impl BitOr<BigUInt> for &BigUInt {
+	type Output = BigUInt;
+
+	fn bitor(self, mut rhs: BigUInt) -> Self::Output {
+		rhs |= self;
+		rhs
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
 	use crate::util::{from_foreign_biguint, to_foreign_biguint};
 
 	#[test]
-    fn test_shl() {
-        test_shl_helper(
-            "6846846153131516846848484878712315485461581468541664586"
-                .parse()
-                .unwrap(),
-            789,
-        );
-        test_shl_helper("48646451651461645156847987135120".parse().unwrap(), 4515);
-        test_shl_helper(
-            "8797984464683153151318697879779797841387879"
-                .parse()
-                .unwrap(),
-            0,
-        );
+	fn test_shl() {
+		test_shl_helper(
+			"6846846153131516846848484878712315485461581468541664586"
+				.parse()
+				.unwrap(),
+			789,
+		);
+		test_shl_helper("48646451651461645156847987135120".parse().unwrap(), 4515);
+		test_shl_helper(
+			"8797984464683153151318697879779797841387879"
+				.parse()
+				.unwrap(),
+			0,
+		);
 
 		test_shl_helper("351105168485616848948".parse().unwrap(), 64);
 		test_shl_helper(BigUInt::ZERO, 68);
-    }
+	}
 
 	#[test]
 	fn test_shr() {
@@ -196,19 +215,24 @@ mod tests {
 			0,
 		);
 
-		test_shl_helper("3511051684856168464684684864684864351848948".parse().unwrap(), 64);
+		test_shl_helper(
+			"3511051684856168464684684864684864351848948"
+				.parse()
+				.unwrap(),
+			64,
+		);
 		test_shl_helper(BigUInt::ZERO, 68);
 	}
 
 	#[test]
 	#[should_panic]
 	fn test_shl2() {
-		BigUInt::from(456u64) << -1;
+		let _ = BigUInt::from(456u64) << -1;
 	}
 
-    fn test_shl_helper(a: BigUInt, b: u64) {
-        let res_native = a.clone() << b;
-        let res_foreign = from_foreign_biguint(to_foreign_biguint(a).shl(b));
-        assert_eq!(res_native, res_foreign)
-    }
+	fn test_shl_helper(a: BigUInt, b: u64) {
+		let res_native = a.clone() << b;
+		let res_foreign = from_foreign_biguint(to_foreign_biguint(a).shl(b));
+		assert_eq!(res_native, res_foreign)
+	}
 }

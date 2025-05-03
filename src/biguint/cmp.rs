@@ -1,20 +1,23 @@
-use crate::biguint::BigUInt;
 use core::cmp::Ordering;
-use core::slice::Iter;
+
+use crate::biguint::BigUInt;
 
 impl PartialOrd for BigUInt {
-	fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		Some(self.cmp(other))
+	}
 }
 
 impl Ord for BigUInt {
 	fn cmp(&self, other: &Self) -> Ordering {
-		match Ord::cmp(&self.len(), &other.len())
-		{
+		match Ord::cmp(&self.len(), &other.len()) {
 			Ordering::Less => Ordering::Less,
 			Ordering::Greater => Ordering::Greater,
 			Ordering::Equal =>
-				// rev because little-endian
+			// rev because little-endian
+			{
 				Iterator::cmp(self.data.iter().rev(), other.data.iter().rev())
+			}
 		}
 	}
 }

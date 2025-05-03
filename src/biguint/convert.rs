@@ -1,10 +1,9 @@
-use crate::biguint::BigUInt;
-use crate::error::{TryIntoIntError, TryFromIntError};
-use crate::{SetVal, TrySetVal};
 use core::convert::{TryFrom, TryInto};
-use smallvec::alloc::vec::Vec;
-use smallvec::SmallVec;
+
+use crate::biguint::BigUInt;
+use crate::error::{TryFromIntError, TryIntoIntError};
 use crate::util::u64s_to_u128;
+use crate::{SetVal, TrySetVal};
 
 macro_rules! impl_from_u {
 	($($t:ty),*) => {
@@ -53,17 +52,15 @@ macro_rules! impl_try_into {
 impl_try_into! { u8, u16, u32, u64, usize, i8, i16, i32, i64, isize }
 
 impl TryFrom<&BigUInt> for u128 {
-    type Error = TryIntoIntError;
-    fn try_from(val: &BigUInt) -> Result<Self, Self::Error> {
-        match val.len() {
-            0usize => Ok(0u64 as u128),
-            1usize => Ok(val[0] as u128),
-	        2usize => {
-				Ok(u64s_to_u128([val[0], val[1]]))
-	        },
-            _ => Err(TryIntoIntError),
-        }
-    }
+	type Error = TryIntoIntError;
+	fn try_from(val: &BigUInt) -> Result<Self, Self::Error> {
+		match val.len() {
+			0usize => Ok(0u64 as u128),
+			1usize => Ok(val[0] as u128),
+			2usize => Ok(u64s_to_u128([val[0], val[1]])),
+			_ => Err(TryIntoIntError),
+		}
+	}
 }
 
 impl TryFrom<&BigUInt> for i128 {
@@ -72,9 +69,9 @@ impl TryFrom<&BigUInt> for i128 {
 		match val.len() {
 			0usize => Ok(0u64 as i128),
 			1usize => Ok(val[0] as i128),
-			2usize => {
-				Ok(u64s_to_u128([val[0], val[1]]).try_into().map_err(|_| TryIntoIntError)?)
-			},
+			2usize => Ok(u64s_to_u128([val[0], val[1]])
+				.try_into()
+				.map_err(|_| TryIntoIntError)?),
 			_ => Err(TryIntoIntError),
 		}
 	}
@@ -85,40 +82,40 @@ mod tests {
 	use super::*;
 
 	#[test]
-    fn test_create() {
-        let zero: BigUInt = Default::default();
-        let cmp = BigUInt::from_vec_le(vec![]);
-        assert_eq!(zero, cmp);
+	fn test_create() {
+		let zero: BigUInt = Default::default();
+		let cmp = BigUInt::from_vec_le(vec![]);
+		assert_eq!(zero, cmp);
 
-        let from_u32 = BigUInt::from(128u32);
-        let cmp = BigUInt::from_vec_le(vec![128u64]);
-        assert_eq!(from_u32, cmp);
+		let from_u32 = BigUInt::from(128u32);
+		let cmp = BigUInt::from_vec_le(vec![128u64]);
+		assert_eq!(from_u32, cmp);
 
-        let from_u64 = BigUInt::from(u64::MAX);
-        let cmp = BigUInt::from_vec_le(vec![u64::MAX]);
-        assert_eq!(from_u64, cmp);
+		let from_u64 = BigUInt::from(u64::MAX);
+		let cmp = BigUInt::from_vec_le(vec![u64::MAX]);
+		assert_eq!(from_u64, cmp);
 
-        let from_u128 = BigUInt::from(u128::MAX - 1u128);
-        let cmp = BigUInt::from_vec_le(vec![u64::MAX - 1u64, u64::MAX]);
-        assert_eq!(from_u128, cmp);
+		let from_u128 = BigUInt::from(u128::MAX - 1u128);
+		let cmp = BigUInt::from_vec_le(vec![u64::MAX - 1u64, u64::MAX]);
+		assert_eq!(from_u128, cmp);
 
-        let from_i32 = BigUInt::try_from(128i32).unwrap();
-        let cmp = BigUInt::from_vec_le(vec![128u64]);
-        assert_eq!(from_i32, cmp);
+		let from_i32 = BigUInt::try_from(128i32).unwrap();
+		let cmp = BigUInt::from_vec_le(vec![128u64]);
+		assert_eq!(from_i32, cmp);
 
-        let from_i64 = BigUInt::try_from(-1i64);
-        assert!(from_i64.is_err());
+		let from_i64 = BigUInt::try_from(-1i64);
+		assert!(from_i64.is_err());
 
-        let from_i128 = BigUInt::try_from(i128::MAX).unwrap();
-        let cmp = BigUInt::from_vec_le(vec![u64::MAX, i64::MAX as u64]);
-        assert_eq!(from_i128, cmp);
+		let from_i128 = BigUInt::try_from(i128::MAX).unwrap();
+		let cmp = BigUInt::from_vec_le(vec![u64::MAX, i64::MAX as u64]);
+		assert_eq!(from_i128, cmp);
 
-        let from_empty_vec = BigUInt::from_vec_le(vec![]);
-        let cmp = BigUInt::from_vec_le(vec![]);
-        assert_eq!(from_empty_vec, cmp);
+		let from_empty_vec = BigUInt::from_vec_le(vec![]);
+		let cmp = BigUInt::from_vec_le(vec![]);
+		assert_eq!(from_empty_vec, cmp);
 
-        let from_defective_vec = BigUInt::from_vec_le(vec![0u64, 0u64]);
-        let cmp = BigUInt::from_vec_le(vec![]);
-        assert_eq!(from_defective_vec, cmp);
-    }
+		let from_defective_vec = BigUInt::from_vec_le(vec![0u64, 0u64]);
+		let cmp = BigUInt::from_vec_le(vec![]);
+		assert_eq!(from_defective_vec, cmp);
+	}
 }
