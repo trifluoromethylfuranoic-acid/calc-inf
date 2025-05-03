@@ -1,0 +1,10 @@
+[package]
+name = "bignums"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+smallvec = { version = "1.15.0", features = ["serde", "union", "const_generics", "const_new"] }
+
+[dev-dependencies]
+num-bigint = "0.4"
