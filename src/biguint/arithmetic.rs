@@ -46,11 +46,11 @@ macro_rules! impl_arithmetic_i {
 impl_arithmetic_i! { i8, i16, i32, i64, i128, isize }
 
 impl BigUInt {
+	/// Calculates lhs * rhs, saves result into self
+	/// Unlike self = &lhs * &rhs, avoids allocations if possible
 	pub fn mul_to(&mut self, lhs: &BigUInt, rhs: &BigUInt) {
 		let new_len = lhs.len() + rhs.len();
-		self.data.grow(new_len);
-		self.data.fill(0u64);
-		self.data.set_or_insert(new_len - 1, 0u64);
+		self.data.set_len_fill_zero(new_len);
 		for (i, &a_i) in lhs.data.iter().enumerate() {
 			let mut carry = 0u64;
 			for (j, &b_j) in rhs.data.iter().enumerate() {
@@ -64,9 +64,10 @@ impl BigUInt {
 			}
 			self.data[i + rhs.len()] = carry;
 		}
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 	}
 
+	/// Calculates self - lhs, saves result into self
 	/// Returns false and leaves garbage in self on overflow.
 	fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
 		let mut borrow = 0u64;
@@ -83,11 +84,11 @@ impl BigUInt {
 			self.data.set_or_insert(i, diff2);
 			borrow = borrow1 as u64 + borrow2 as u64;
 		}
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 		borrow == 0
 	}
 
-	/// Calculates lhs - self
+	/// Calculates lhs - self, saves result into self
 	/// Returns false and leaves garbage in self on overflow.
 	fn checked_sub_from_assign(&mut self, lhs: &Self) -> bool {
 		let mut borrow = 0u64;
@@ -104,7 +105,7 @@ impl BigUInt {
 			self.data.set_or_insert(i, diff2);
 			borrow = borrow1 as u64 + borrow2 as u64;
 		}
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 		borrow == 0
 	}
 

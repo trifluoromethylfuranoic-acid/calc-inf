@@ -126,7 +126,7 @@ impl BitAndAssign<&BigUInt> for BigUInt {
 		for (x, y) in iter::zip(self.data.iter_mut(), rhs.data.iter()) {
 			*x &= y;
 		}
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 	}
 }
 
@@ -185,7 +185,7 @@ impl BitXorAssign<&BigUInt> for BigUInt {
 		if rhs.len() > self.len() {
 			self.data.extend(rhs.data[self.len()..].iter().copied());
 		}
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 	}
 }
 
@@ -214,7 +214,7 @@ impl Not for BigUInt {
 		for x in self.data.iter_mut() {
 			*x = !*x;
 		}
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 		self
 	}
 }

@@ -25,7 +25,7 @@ impl SetVal<u128> for BigUInt {
 		let le = util::u128_to_u64s(src);
 		self.data.clear();
 		self.data.extend(le);
-		self.truncate_leading();
+		self.truncate_leading_zeros();
 	}
 }
 

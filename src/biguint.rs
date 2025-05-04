@@ -57,13 +57,9 @@ impl BigUInt {
 		self.data.is_empty()
 	}
 
-	fn truncate_leading(&mut self) {
-		while !self.data.is_empty() {
-			if self[self.len() - 1] == 0u64 {
-				self.data.pop();
-			} else {
-				break;
-			}
+	fn truncate_leading_zeros(&mut self) {
+		while let Some(&0u64) = self.data.last() {
+			self.data.pop();
 		}
 	}
 }
