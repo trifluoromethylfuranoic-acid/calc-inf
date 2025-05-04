@@ -36,11 +36,11 @@ where
 {
 	fn get_or_default(&self, idx: usize) -> T;
 	fn set_or_insert(&mut self, idx: usize, val: T);
-
-	fn extend_zero(&mut self, by: usize);
-
+	fn extend_by(&mut self, by: usize, val: T);
+	fn extend_zero(&mut self, by: usize) {
+		self.extend_by(by, T::default());
+	}
 	fn set_len_fill(&mut self, new_len: usize, val: T);
-
 	fn set_len_fill_zero(&mut self, new_len: usize) {
 		self.set_len_fill(new_len, T::default());
 	}
@@ -63,14 +63,18 @@ where
 		}
 	}
 
-	fn extend_zero(&mut self, by: usize) {
+	fn extend_by(&mut self, by: usize, val: T) {
 		self.grow(self.len() + by);
-		self.extend(iter::repeat_n(T::default(), by));
+		self.extend(iter::repeat_n(val, by));
 	}
 
 	fn set_len_fill(&mut self, new_len: usize, val: T) {
+		if new_len < self.len() {
+			self.truncate(new_len);
+		} else {
+			self.extend_by(new_len - self.len(), val.clone());
+		}
 		self.fill(val);
-		self.extend_zero(new_len - self.len())
 	}
 }
 
