@@ -56,6 +56,10 @@ impl BigUInt {
 	pub fn is_zero(&self) -> bool {
 		self.data.is_empty()
 	}
+	
+	pub fn set_zero(&mut self) {
+		self.data.clear();
+	}
 
 	fn truncate_leading_zeros(&mut self) {
 		while let Some(&0u64) = self.data.last() {

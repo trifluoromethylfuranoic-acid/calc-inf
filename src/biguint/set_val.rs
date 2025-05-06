@@ -2,7 +2,7 @@ use core::convert::TryInto;
 
 use crate::biguint::BigUInt;
 use crate::error::TryFromIntError;
-use crate::{util, SetVal, TrySetVal};
+use crate::{SetVal, TrySetVal, util};
 
 macro_rules! impl_set_val_u {
 	($($t:ty),*) => {

@@ -71,10 +71,11 @@ where
 	fn set_len_fill(&mut self, new_len: usize, val: T) {
 		if new_len < self.len() {
 			self.truncate(new_len);
+			self.fill(val);
 		} else {
-			self.extend_by(new_len - self.len(), val.clone());
+			self.fill(val.clone());
+			self.extend_by(new_len - self.len(), val);
 		}
-		self.fill(val);
 	}
 }
 

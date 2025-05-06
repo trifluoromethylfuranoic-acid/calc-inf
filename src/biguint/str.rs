@@ -1,8 +1,8 @@
 use core::str::FromStr;
 
+use crate::SetVal;
 use crate::biguint::BigUInt;
 use crate::error::ParseIntError;
-use crate::SetVal;
 
 impl FromStr for BigUInt {
 	type Err = ParseIntError;

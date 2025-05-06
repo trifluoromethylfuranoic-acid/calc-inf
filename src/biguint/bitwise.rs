@@ -4,9 +4,9 @@ use core::ops::{
 	ShrAssign,
 };
 
+use crate::SetVal;
 use crate::biguint::BigUInt;
 use crate::util::VecExt;
-use crate::SetVal;
 
 macro_rules! impl_shl {
 	($($t:ty),*) => {$(
@@ -93,7 +93,10 @@ macro_rules! impl_shr_assign {
 				let mult64 = (rhs / (BITS as $t)) as usize;
 				let rem    = (rhs % (BITS as $t)) as u64;
 
-				if mult64 >= self.len() { self.set_val(0u64); }
+				if mult64 >= self.len() {
+					self.set_val(0u64);
+					return;
+				}
 
 				// Shift by mult64 u64s
 				self.data.copy_within(mult64.., 0);
@@ -246,27 +249,27 @@ mod tests {
 
 	#[test]
 	fn test_shr() {
-		test_shl_helper(
+		test_shr_helper(
 			"6846846153131516846848484878712315485461581468541664586"
 				.parse()
 				.unwrap(),
 			45,
 		);
-		test_shl_helper("48646451651461645156847987135120".parse().unwrap(), 4515);
-		test_shl_helper(
+		test_shr_helper("48646451651461645156847987135120".parse().unwrap(), 4515);
+		test_shr_helper(
 			"8797984464683153151318697879779797841387879"
 				.parse()
 				.unwrap(),
 			0,
 		);
 
-		test_shl_helper(
+		test_shr_helper(
 			"3511051684856168464684684864684864351848948"
 				.parse()
 				.unwrap(),
 			64,
 		);
-		test_shl_helper(BigUInt::ZERO, 68);
+		test_shr_helper(BigUInt::ZERO, 68);
 	}
 
 	#[test]
@@ -278,6 +281,12 @@ mod tests {
 	fn test_shl_helper(a: BigUInt, b: u64) {
 		let res_native = a.clone() << b;
 		let res_foreign = from_foreign_biguint(to_foreign_biguint(a).shl(b));
+		assert_eq!(res_native, res_foreign)
+	}
+
+	fn test_shr_helper(a: BigUInt, b: u64) {
+		let res_native = a.clone() >> b;
+		let res_foreign = from_foreign_biguint(to_foreign_biguint(a).shr(b));
 		assert_eq!(res_native, res_foreign)
 	}
 }
