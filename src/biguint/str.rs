@@ -2,6 +2,7 @@ use core::str::FromStr;
 
 use crate::SetVal;
 use crate::biguint::BigUInt;
+use crate::biguint::mul::MulTo;
 use crate::error::ParseIntError;
 
 impl FromStr for BigUInt {

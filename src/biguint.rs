@@ -2,15 +2,19 @@ use core::ops::Index;
 
 use smallvec::SmallVec;
 
-mod arithmetic;
-mod bitwise;
+mod add;
+mod div;
+mod bits;
 mod cmp;
 mod convert;
 mod convert_data;
 mod set_val;
 mod str;
+mod sub;
+mod mul;
 
-pub use arithmetic::*;
+pub use sub::*;
+pub use mul::*;
 
 type Data = SmallVec<[u64; 2]>;
 
@@ -56,7 +60,7 @@ impl BigUInt {
 	pub fn is_zero(&self) -> bool {
 		self.data.is_empty()
 	}
-	
+
 	pub fn set_zero(&mut self) {
 		self.data.clear();
 	}
