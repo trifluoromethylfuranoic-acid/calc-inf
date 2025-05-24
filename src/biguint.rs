@@ -3,18 +3,18 @@ use core::ops::Index;
 use smallvec::SmallVec;
 
 mod add;
-mod div;
 mod bits;
 mod cmp;
 mod convert;
 mod convert_data;
+mod div;
+mod mul;
 mod set_val;
 mod str;
 mod sub;
-mod mul;
 
-pub use sub::*;
 pub use mul::*;
+pub use sub::*;
 
 type Data = SmallVec<[u64; 2]>;
 

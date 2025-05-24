@@ -4,9 +4,37 @@ use core::ops::{
 	ShrAssign,
 };
 
-use crate::SetVal;
 use crate::biguint::BigUInt;
 use crate::util::VecExt;
+
+impl BigUInt {
+	/// Shift left by whole digits
+	/// A digit is 64 bits
+	pub fn shl_digits(&mut self, digits: usize) {
+		if self.is_zero() { return; }
+
+		let old_len = self.len();
+		self.data.extend_zero(digits);
+
+		self.data.copy_within(0..old_len, digits);
+		self.data[0..digits].fill(0u64);
+
+	}
+
+	/// Shift right by whole digits
+	/// A digit is 64 bits
+	pub fn shr_digits(&mut self, digits: usize) {
+		if digits >= self.len() {
+			self.set_zero();
+			return;
+		}
+
+		self.data.copy_within(digits.., 0);
+		self.data.truncate(self.len() - digits);
+
+
+	}
+}
 
 macro_rules! impl_shl {
 	($($t:ty),*) => {$(
@@ -33,18 +61,14 @@ macro_rules! impl_shl_assign {
 				let is_non_negative = rhs >= 0;
 				assert!(is_non_negative, "attempt to bitshift left by negative amount: {rhs}");
 
-				if self.is_zero() { return; }
+			    if self.is_zero() { return; }
 
 				const BITS: u64 = u64::BITS as u64;
 				let mult64 = (rhs / (BITS as $t)) as usize;
 				let rem    = (rhs % (BITS as $t)) as u64;
 
-				let old_len = self.len();
-				self.data.extend_zero(mult64);
-
-				// Shift by mult64 u64s
-				self.data.copy_within(0..old_len, mult64);
-				self.data[0..mult64].fill(0u64);
+			    // Shift by mult64 digits
+			    self.shl_digits(mult64);
 
 				// Shift by rem bits
 				if rem != 0 {
@@ -93,14 +117,8 @@ macro_rules! impl_shr_assign {
 				let mult64 = (rhs / (BITS as $t)) as usize;
 				let rem    = (rhs % (BITS as $t)) as u64;
 
-				if mult64 >= self.len() {
-					self.set_val(0u64);
-					return;
-				}
-
-				// Shift by mult64 u64s
-				self.data.copy_within(mult64.., 0);
-				self.data.truncate(self.len() - mult64);
+				// Shift by mult64 digits
+				self.shr_digits(mult64);
 
 				// Shift by rem bits
 				if rem != 0 {

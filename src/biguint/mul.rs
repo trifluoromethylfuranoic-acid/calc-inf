@@ -1,6 +1,7 @@
 use core::ops::{Mul, MulAssign};
+
 use crate::biguint::BigUInt;
-use crate::util::{carrying_mul, VecExt};
+use crate::util::{VecExt, carrying_mul};
 
 pub trait MulTo {
 	/// Calculates lhs * rhs, saves result into self

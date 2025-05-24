@@ -1,7 +1,7 @@
+use crate::SetVal;
 use crate::biguint::BigUInt;
 use crate::biguint::mul::MulTo;
 use crate::util::u64s_to_u128;
-use crate::SetVal;
 
 impl BigUInt {
 	/// Calculates the quotient and remainder
@@ -34,28 +34,44 @@ impl BigUInt {
 		*d >>= normalization_bitshift;
 	}
 
+	/// Calculates the quotient and remainder
+	/// Preconditions:
+	///     * d != 0
+	///     * n >= d
+	///     * Normalization: denominator's leading digit has to be >= 2^64 / 2
+	/// Puts quotient in q and remainder in r
+	/// n and d are mutable for implementation reasons, they are restored to original values before return.
+	/// Uses long division, internally uses Knuth's Algorithm D
 	fn div_rem_to_normalized(n: &BigUInt, d: &BigUInt, q: &mut BigUInt, r: &mut BigUInt) {
 		// Intermediate numerator
 		let mut n_inter = n.clone();
 		// Make it the same len as d
-		n_inter >>= (n.len() - d.len()) as u32 * u64::BITS;
-		// We need it to be one digit longer than d, so we put a leading zero
-		n_inter.data.push(0u64);
+		n_inter.shr_digits(n.len() - d.len());
 		// Clear q
 		q.set_zero();
-		// We go backwards from the most significant remaining digits of n
+		// Start from the most significant remaining digits of n
 		let iter = n.data[0..(n.len() - d.len())].iter().rev();
 		for &x in iter {
+			// If n_inter is guaranteed smaller than d, write a zero into q and
+			// continue with one more digit
+			if n_inter.len() < d.len() {
+				n_inter.data.insert(0, x);
+				q.data.push(0u64);
+				continue;
+			}
+			// If still too short, pad with a zero
+			if n_inter.len() == d.len() {
+				n_inter.data.push(0u64);
+			}
+
 			// Preconditions:
-			//     * Length:
-			//         -- initially, ensured above
-			//         -- during iteration, ensured below
+			//     * Length: ensured above
 			//     * d != 0: is ensured by caller
 			//     * Overflow:
 			//         -- initially we take d.len() digits and pad with high 0,
 			//                so effectively dividing same digit numbers, no overflow
 			//         -- rest is ensured by properties of division
-			//     * Normalization: done above
+			//     * Normalization: guaranteed by caller
 			let q_i = div_n_plus_1_digits_normalized(&n_inter, d, r);
 			// Assemble q in reverse order, reverse it back later
 			q.data.push(q_i);
@@ -63,11 +79,9 @@ impl BigUInt {
 			n_inter.set_val(&*r);
 			// Bring down another digit
 			n_inter.data.insert(0, x);
-
-			// Pad d with zeros until correct len
-			while n_inter.len() <= d.len() {
-				n_inter.data.push(0u64);
-			}
+		}
+		if n_inter.len() == d.len() {
+			n_inter.data.push(0u64);
 		}
 		let q_i = div_n_plus_1_digits_normalized(&n_inter, d, r);
 		q.data.push(q_i);
@@ -104,6 +118,24 @@ impl BigUInt {
 /// Returns the quotient, puts remainder in r
 /// Uses Knuth's Algorithm D, as described in https://ridiculousfish.com/blog/posts/labor-of-division-episode-iv.html
 fn div_n_plus_1_digits_normalized(n: &BigUInt, d: &BigUInt, r: &mut BigUInt) -> u64 {
+	fn correct_q(q_est: &mut u64, r: &mut BigUInt, n: &BigUInt, d: &BigUInt) {
+		// Use r's buffer to hold q_est * d
+		r.mul_to(d, &BigUInt::from(*q_est));
+
+		// q_est is always an overestimate, and at most by 2 because inputs are normalized
+		for _ in 0..2 {
+			// Estimate is right
+			if *r <= *n {
+				break;
+			}
+			// Correct by one
+			*q_est -= 1;
+			*r -= d;
+		}
+		// Put the remainder into r
+		r.checked_sub_from_assign(n);
+	}
+
 	debug_assert_eq!(
 		n.len(),
 		d.len() + 1,
@@ -114,21 +146,11 @@ fn div_n_plus_1_digits_normalized(n: &BigUInt, d: &BigUInt, r: &mut BigUInt) -> 
 
 	let n_hi = [n[n.len() - 2], n[n.len() - 1]];
 	let d_hi = d[d.len() - 1];
-	let q_est = div_2_digits(n_hi, d_hi);
-	let mut q = q_est;
-	// q_est is always an overestimate, and at most by 2 because inputs are normalized
-	for _ in 0..=2 {
-		// Use r's buffer to temporarily hold q * d
-		r.mul_to(d, &BigUInt::from(q));
-		if *r <= *n {
-			break;
-		} else {
-			q -= 1;
-		}
-	}
-	// Put the remainder into r
-	r.checked_sub_from_assign(n);
-	q
+	let mut q_est = div_2_digits(n_hi, d_hi);
+
+	correct_q(&mut q_est, r, n, d);
+
+	q_est
 }
 
 /// Divides 2-digit numerator by 1-digit denominator.

@@ -116,7 +116,6 @@ macro_rules! impl_add_i {
 
 impl_add_i! { i8, i16, i32, i64, i128, isize }
 
-
 #[cfg(test)]
 mod tests {
 	use super::*;

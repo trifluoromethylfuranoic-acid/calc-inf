@@ -1,7 +1,7 @@
 use core::ops::{Sub, SubAssign};
+
 use crate::biguint::BigUInt;
 use crate::util::VecExt;
-
 
 pub trait CheckedSub<T> {
 	fn checked_sub(self, rhs: T) -> Option<BigUInt>;
@@ -197,7 +197,6 @@ macro_rules! impl_sub_i {
 }
 
 impl_sub_i! { i8, i16, i32, i64, i128, isize }
-
 
 #[cfg(test)]
 mod tests {
