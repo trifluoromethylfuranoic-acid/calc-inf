@@ -11,14 +11,15 @@ impl BigUInt {
 	/// Shift left by whole digits
 	/// A digit is 64 bits
 	pub fn shl_digits(&mut self, digits: usize) {
-		if self.is_zero() { return; }
+		if self.is_zero() {
+			return;
+		}
 
 		let old_len = self.len();
 		self.data.extend_zero(digits);
 
 		self.data.copy_within(0..old_len, digits);
 		self.data[0..digits].fill(0u64);
-
 	}
 
 	/// Shift right by whole digits
@@ -31,8 +32,6 @@ impl BigUInt {
 
 		self.data.copy_within(digits.., 0);
 		self.data.truncate(self.len() - digits);
-
-
 	}
 }
 

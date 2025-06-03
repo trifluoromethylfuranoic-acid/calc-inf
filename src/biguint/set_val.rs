@@ -37,12 +37,7 @@ impl SetVal<usize> for BigUInt {
 		let val = src as u32;
 		#[cfg(target_pointer_width = "64")]
 		let val = src as u64;
-		#[cfg(not(any(
-			target_pointer_width = "32",
-			target_pointer_width = "64",
-			target_pointer_width = "16"
-		)))]
-		compile_error!("This crate only supports 16, 32 and 64 bit targets.");
+
 		self.data.clear();
 		if val != 0u64 {
 			self.data.push(val);

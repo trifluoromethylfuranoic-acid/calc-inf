@@ -1,7 +1,168 @@
-use crate::SetVal;
+use core::ops::{Div, Rem};
+
 use crate::biguint::BigUInt;
 use crate::biguint::mul::MulTo;
+use crate::error::TryFromIntError;
 use crate::util::u64s_to_u128;
+use crate::{SetVal, TrySetVal};
+
+pub trait DivRem<RHS = Self> {
+	type Output;
+	fn div_rem(self, d: RHS) -> (Self::Output, Self::Output);
+	fn div_rem_to(self, d: RHS, q: &mut Self::Output, r: &mut Self::Output);
+}
+
+impl DivRem for &mut BigUInt {
+	type Output = BigUInt;
+
+	fn div_rem(self, d: &mut BigUInt) -> (BigUInt, BigUInt) {
+		let mut q = BigUInt::ZERO;
+		let mut r = BigUInt::ZERO;
+		self.div_rem_to(d, &mut q, &mut r);
+		(q, r)
+	}
+
+	fn div_rem_to(self, d: &mut BigUInt, q: &mut BigUInt, r: &mut BigUInt) {
+		assert_ne!(*d, 0u64, "division by zero");
+		if self < d {
+			q.set_zero();
+			r.set_val(&*self);
+		} else if *d == 1u64 {
+			q.set_val(&*self);
+			r.set_zero();
+		} else {
+			BigUInt::div_rem_to_unchecked(self, d, q, r);
+		}
+	}
+}
+
+macro_rules! impl_div_rem_u {
+	($($t:ty),*) => {$(
+		impl DivRem<$t> for &mut BigUInt {
+			type Output = BigUInt;
+			fn div_rem(self, d: $t) -> (BigUInt, BigUInt) {
+				let mut q = BigUInt::ZERO;
+				let mut r = BigUInt::ZERO;
+				self.div_rem_to(d, &mut q, &mut r);
+				(q, r)
+			}
+
+			fn div_rem_to(self, d: $t, q: &mut BigUInt, r: &mut BigUInt) {
+				self.div_rem_to(&mut BigUInt::from(d), q, r);
+			}
+		}
+
+		impl DivRem<&BigUInt> for $t {
+			type Output = BigUInt;
+			fn div_rem(self, d: &BigUInt) -> (BigUInt, BigUInt) {
+				let mut q = BigUInt::ZERO;
+				let mut r = BigUInt::ZERO;
+				self.div_rem_to(d, &mut q, &mut r);
+				(q, r)
+			}
+
+			fn div_rem_to(self, d: &BigUInt, q: &mut BigUInt, r: &mut BigUInt) {
+				let n: u128 = self as u128;
+				if let Ok(d) = TryInto::<u128>::try_into(d) {
+					*q = BigUInt::from(n / d);
+					*r = BigUInt::from(n / d);
+				} else {
+					q.set_zero();
+					r.set_val(self);
+				}
+			}
+		}
+	)*};
+}
+
+impl_div_rem_u! { u8, u16, u32, u64, u128, usize }
+
+macro_rules! impl_div_rem_i {
+	($($t:ty),*) => {$(
+		impl DivRem<$t> for &mut BigUInt {
+			type Output = BigUInt;
+			fn div_rem(self, d: $t) -> (BigUInt, BigUInt) {
+				let mut q = BigUInt::ZERO;
+				let mut r = BigUInt::ZERO;
+				self.div_rem_to(d, &mut q, &mut r);
+				(q, r)
+			}
+
+			fn div_rem_to(self, d: $t, q: &mut BigUInt, r: &mut BigUInt) {
+				self.div_rem_to(&mut BigUInt::try_from(d).unwrap(), q, r);
+			}
+		}
+
+		impl DivRem<&BigUInt> for $t {
+			type Output = BigUInt;
+			fn div_rem(self, d: &BigUInt) -> (BigUInt, BigUInt) {
+				let mut q = BigUInt::ZERO;
+				let mut r = BigUInt::ZERO;
+				self.div_rem_to(d, &mut q, &mut r);
+				(q, r)
+			}
+
+			fn div_rem_to(self, d: &BigUInt, q: &mut BigUInt, r: &mut BigUInt) {
+				let n: u128 = self.try_into().map_err(|_| TryFromIntError).unwrap();
+				if let Ok(d) = TryInto::<u128>::try_into(d) {
+					*q = BigUInt::from(n / d);
+					*r = BigUInt::from(n / d);
+				} else {
+					q.set_zero();
+					r.set_val(n);
+				}
+			}
+		}
+	)*};
+}
+
+impl_div_rem_i! { i8, i16, i32, i64, i128, isize }
+
+macro_rules! impl_div_and_rem {
+	($(($t1:ty | $t2:ty)),*$(,)?) => {$(
+		impl Div<$t2> for $t1 {
+			type Output = BigUInt;
+			fn div(self, rhs: $t2) -> BigUInt {
+				self.div_rem(rhs).0
+			}
+		}
+
+		impl Rem<$t2> for $t1 {
+			type Output = BigUInt;
+			fn rem(self, rhs: $t2) -> BigUInt {
+				self.div_rem(rhs).1
+			}
+		}
+	)*};
+}
+
+impl_div_and_rem! {
+	(&mut BigUInt | &mut BigUInt),
+	(&mut BigUInt | u8),
+	(&mut BigUInt | u16),
+	(&mut BigUInt | u32),
+	(&mut BigUInt | u64),
+	(&mut BigUInt | u128),
+	(&mut BigUInt | usize),
+	(&mut BigUInt | i8),
+	(&mut BigUInt | i16),
+	(&mut BigUInt | i32),
+	(&mut BigUInt | i64),
+	(&mut BigUInt | i128),
+	(&mut BigUInt | isize),
+	(u8           | &BigUInt),
+	(u16          | &BigUInt),
+	(u32          | &BigUInt),
+	(u64          | &BigUInt),
+	(u128         | &BigUInt),
+	(usize        | &BigUInt),
+	(i8           | &BigUInt),
+	(i16          | &BigUInt),
+	(i32          | &BigUInt),
+	(i64          | &BigUInt),
+	(i128         | &BigUInt),
+	(isize        | &BigUInt),
+}
 
 impl BigUInt {
 	/// Calculates the quotient and remainder
@@ -89,23 +250,6 @@ impl BigUInt {
 		// Unfuck q
 		q.data.reverse();
 		q.truncate_leading_zeros();
-	}
-
-	pub fn div_rem_to(n: &mut BigUInt, d: &mut BigUInt, q: &mut BigUInt, r: &mut BigUInt) {
-		assert_ne!(*d, 0, "division by zero");
-		if n < d {
-			q.set_zero();
-			r.set_val(&*n);
-		} else {
-			Self::div_rem_to_unchecked(n, d, q, r);
-		}
-	}
-
-	pub fn div_rem(&mut self, d: &mut BigUInt) -> (BigUInt, BigUInt) {
-		let mut q = Self::ZERO;
-		let mut r = Self::ZERO;
-		Self::div_rem_to(self, d, &mut q, &mut r);
-		(q, r)
 	}
 }
 
