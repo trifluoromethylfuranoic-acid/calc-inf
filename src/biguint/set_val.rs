@@ -3,6 +3,7 @@ use core::convert::TryInto;
 use crate::biguint::BigUInt;
 use crate::error::TryFromIntError;
 use crate::{SetVal, TrySetVal, util};
+use crate::bigint::BigInt;
 
 macro_rules! impl_set_val_u {
 	($($t:ty),*) => {
@@ -45,7 +46,7 @@ impl SetVal<usize> for BigUInt {
 	}
 }
 
-impl<'a> SetVal<&'a Self> for BigUInt {
+impl SetVal<&Self> for BigUInt {
 	fn set_val(&mut self, src: &Self) {
 		self.data.clone_from(&src.data)
 	}
@@ -66,6 +67,17 @@ macro_rules! impl_try_set_val_i {
 }
 
 impl_try_set_val_i! { i8 => u8, i16 => u16, i32 => u32, i64 => u64, i128 => u128, isize => usize }
+
+impl TrySetVal<&BigInt> for BigUInt {
+	type Error = TryFromIntError;
+	fn try_set_val(&mut self, src: &BigInt) -> Result<(), Self::Error> {
+		if src.is_negative() { Err(TryFromIntError) }
+		else {
+			self.set_val(src.inner());
+			Ok(())
+		}
+	}
+}
 
 impl Clone for BigUInt {
 	fn clone(&self) -> Self {

@@ -19,10 +19,10 @@ pub use sub::*;
 type Data = SmallVec<[u64; 2]>;
 
 /// Dynamic, arbitrary-sized unsigned integer type
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq)]
 pub struct BigUInt {
 	// Little-endian
-	// Invariant: minimum leading zeros
+	// Invariant: no leading zero digits
 	data: Data,
 }
 
