@@ -5,13 +5,14 @@ mod convert;
 mod set_val;
 mod sub;
 mod mul;
+mod div;
 
 use core::ops::Index;
 
 use crate::biguint::BigUInt;
 
 /// Dynamic, arbitrary-sized signed integer type
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Debug, Hash)]
 pub struct BigInt {
 	// Invariant: if magnitude == 0, is_negative should be false
 	is_negative: bool,
@@ -90,6 +91,12 @@ impl BigInt {
 
 	pub fn unsigned_abs(&self) -> BigUInt {
 		self.magnitude.clone()
+	}
+	
+	fn normalize(&mut self) {
+		if self.is_zero() {
+			self.is_negative = false;
+		}
 	}
 }
 

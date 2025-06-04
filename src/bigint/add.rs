@@ -147,3 +147,44 @@ macro_rules! impl_add {
 }
 
 impl_add! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_bigint_addition() {
+		let a = BigInt::from(100);
+		let b = BigInt::from(30);
+		assert_eq!(a + &b, BigInt::from(130));
+
+		let a = BigInt::from(-100);
+		let b = BigInt::from(30);
+		assert_eq!(a + &b, BigInt::from(-70));
+
+		let a = BigInt::from(100);
+		let b = BigInt::from(-30);
+		assert_eq!(a + &b, BigInt::from(70));
+	}
+
+	#[test]
+	fn test_bigint_biguint_addition() {
+		let a = BigInt::from(100);
+		let b = BigUInt::from(30u32);
+		assert_eq!(a + &b, BigInt::from(130));
+
+		let a = BigUInt::from(100u32);
+		let b = BigInt::from(30);
+		assert_eq!(a + &b, BigInt::from(130));
+	}
+
+	#[test]
+	fn test_bigint_primitive_addition() {
+		let a = BigInt::from(100);
+		assert_eq!(a.clone() + 30u32, BigInt::from(130));
+		assert_eq!(a + (-30i32), BigInt::from(70));
+
+		assert_eq!(100i32 + BigInt::from(30), BigInt::from(130));
+		assert_eq!(100u32 + BigInt::from(30), BigInt::from(130));
+	}
+}

@@ -15,11 +15,12 @@ mod sub;
 
 pub use mul::*;
 pub use sub::*;
+pub use div::*;
 
 type Data = SmallVec<[u64; 2]>;
 
 /// Dynamic, arbitrary-sized unsigned integer type
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Hash)]
 pub struct BigUInt {
 	// Little-endian
 	// Invariant: no leading zero digits

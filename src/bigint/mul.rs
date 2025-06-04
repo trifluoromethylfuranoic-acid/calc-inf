@@ -106,4 +106,53 @@ macro_rules! impl_mul {
 
 impl_mul! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
 
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_bigint_mul() {
+		let a = BigInt::from(100);
+		let b = BigInt::from(200);
+		assert_eq!(&a * &b, BigInt::from(20000));
+
+		let a = BigInt::from(-100);
+		let b = BigInt::from(200);
+		assert_eq!(&a * &b, BigInt::from(-20000));
+
+		let a = BigInt::from(-100);
+		let b = BigInt::from(-200);
+		assert_eq!(&a * &b, BigInt::from(20000));
+		
+		let a = BigInt::from(0);
+		let b = BigInt::from(-200);
+		assert_eq!(&a * &b, BigInt::from(0));
+	}
+
+	#[test]
+	fn test_bigint_mul_biguint() {
+		let a = BigInt::from(100);
+		let b = BigUInt::from(200u32);
+		assert_eq!(&a * &b, BigInt::from(20000));
+
+		let a = BigInt::from(-100);
+		let b = BigUInt::from(200u32);
+		assert_eq!(&a * &b, BigInt::from(-20000));
+	}
+
+	#[test]
+	fn test_bigint_mul_primitive() {
+		let a = BigInt::from(100);
+		assert_eq!(&a * 200i32, BigInt::from(20000));
+		assert_eq!(&a * 200u32, BigInt::from(20000));
+		assert_eq!(200i32 * &a, BigInt::from(20000));
+		assert_eq!(200u32 * &a, BigInt::from(20000));
+
+		let mut b = BigInt::from(100);
+		b *= 200i32;
+		assert_eq!(b, BigInt::from(20000));
+	}
+}
+
+
 

@@ -54,7 +54,7 @@ impl SubAssign<&BigUInt> for BigInt {
 
 impl SubAssign<&BigInt> for BigUInt {
 	fn sub_assign(&mut self, rhs: &BigInt) {
-		if !rhs.is_negative() {
+		if rhs.is_negative() {
 			*self += &rhs.magnitude;
 		} else {
 			match Ord::cmp(self, &rhs.magnitude) {
@@ -153,3 +153,53 @@ macro_rules! impl_sub {
 }
 
 impl_sub! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_bigint_subtraction() {
+		let a = BigInt::from(100);
+		let b = BigInt::from(30);
+		assert_eq!(a - &b, BigInt::from(70));
+
+		let a = BigInt::from(-100);
+		let b = BigInt::from(30);
+		assert_eq!(a - &b, BigInt::from(-130));
+
+		let a = BigInt::from(100);
+		let b = BigInt::from(-30);
+		assert_eq!(a - &b, BigInt::from(130));
+	}
+
+	#[test]
+	fn test_bigint_biguint_subtraction() {
+		let a = BigInt::from(100);
+		let b = BigUInt::from(30u32);
+		assert_eq!(a - &b, BigInt::from(70));
+
+		let a = BigUInt::from(100u32);
+		let b = BigInt::from(30);
+		assert_eq!(a - &b, BigInt::from(70));
+	}
+
+	#[test]
+	fn test_bigint_primitive_subtraction() {
+		let a = BigInt::from(100);
+		assert_eq!(a.clone() - 30u32, BigInt::from(70));
+		assert_eq!(a - (-30i32), BigInt::from(130));
+
+		assert_eq!(100i32 - BigInt::from(30), BigInt::from(70));
+		assert_eq!(100u32 - BigInt::from(30), BigInt::from(70));
+	}
+
+	#[test]
+	#[should_panic]
+	fn test_bigint_subtraction_overflow() {
+		let mut a = BigUInt::from(30u32);
+		let b = BigInt::from(100);
+		a -= &b;
+	}
+}
+

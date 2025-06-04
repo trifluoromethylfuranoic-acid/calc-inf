@@ -19,7 +19,7 @@ impl FromStr for BigUInt {
 
 impl Debug for BigUInt {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		write!(f, "BigUInt({})", self)
+		write!(f, "BigUInt({self})")
 	}
 }
 
