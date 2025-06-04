@@ -1,10 +1,10 @@
 use core::ops::{Div, Rem};
 
-use crate::biguint::mul::MulTo;
+use crate::SetVal;
 use crate::biguint::BigUInt;
+use crate::biguint::mul::MulTo;
 use crate::error::TryFromIntError;
 use crate::util::u64s_to_u128;
-use crate::SetVal;
 
 pub trait DivRem<RHS = Self> {
 	type Output;

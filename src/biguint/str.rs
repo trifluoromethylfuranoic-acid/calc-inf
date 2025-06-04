@@ -101,8 +101,7 @@ impl BigUInt {
 		let mut tmp = Self::ZERO;
 
 		for &c in src.iter().rev() {
-			let d = parse_ascii_digit(c)
-				.ok_or(ParseIntError::InvalidDigit)?;
+			let d = parse_ascii_digit(c).ok_or(ParseIntError::InvalidDigit)?;
 			if d >= radix as u8 {
 				return Err(ParseIntError::InvalidDigit);
 			}
@@ -118,7 +117,7 @@ impl BigUInt {
 	pub fn to_string_radix(&self, radix: u32, uppercase: bool) -> String {
 		fn digit_to_ascii(d: u8, uppercase: bool) -> char {
 			match d {
-				0..=9  => (b'0' + d) as char,
+				0..=9 => (b'0' + d) as char,
 				10..=35 => ((if uppercase { b'A' } else { b'a' }) + (d - 10)) as char,
 				_ => panic!("invalid digit for radix"),
 			}
@@ -129,13 +128,13 @@ impl BigUInt {
 		if self.is_zero() {
 			return "0".to_string();
 		}
-		
+
 		let mut n = self.clone();
 		let mut r = BigUInt::ZERO;
 		let mut tmp = BigUInt::ZERO;
 		let mut digits = Vec::new();
 		let mut radix_big = BigUInt::from(radix);
-	
+
 		while !n.is_zero() {
 			n.div_rem_to(&mut radix_big, &mut tmp, &mut r);
 			n.set_val(&tmp);
@@ -167,7 +166,7 @@ mod tests {
 		assert_eq!(
 			BigUInt::from_str("+999999999").unwrap(),
 			BigUInt::from(999999999u64)
-		);		
+		);
 		assert_eq!(
 			BigUInt::from_str_radix("acd56df", 16).unwrap(),
 			BigUInt::from(0xacd56dfu64)

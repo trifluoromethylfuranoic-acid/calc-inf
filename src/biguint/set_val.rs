@@ -1,9 +1,9 @@
 use core::convert::TryInto;
 
+use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 use crate::error::TryFromIntError;
 use crate::{SetVal, TrySetVal, util};
-use crate::bigint::BigInt;
 
 macro_rules! impl_set_val_u {
 	($($t:ty),*) => {
@@ -71,8 +71,9 @@ impl_try_set_val_i! { i8 => u8, i16 => u16, i32 => u32, i64 => u64, i128 => u128
 impl TrySetVal<&BigInt> for BigUInt {
 	type Error = TryFromIntError;
 	fn try_set_val(&mut self, src: &BigInt) -> Result<(), Self::Error> {
-		if src.is_negative() { Err(TryFromIntError) }
-		else {
+		if src.is_negative() {
+			Err(TryFromIntError)
+		} else {
 			self.set_val(src.inner());
 			Ok(())
 		}

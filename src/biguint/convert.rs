@@ -1,9 +1,21 @@
 use core::convert::{TryFrom, TryInto};
 
+use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 use crate::error::{TryFromIntError, TryIntoIntError};
 use crate::util::u64s_to_u128;
 use crate::{SetVal, TrySetVal};
+
+impl TryFrom<BigInt> for BigUInt {
+	type Error = TryFromIntError;
+	fn try_from(value: BigInt) -> Result<Self, Self::Error> {
+		if value.is_negative() {
+			Err(TryFromIntError)
+		} else {
+			Ok(value.into_inner())
+		}
+	}
+}
 
 macro_rules! impl_from_u {
 	($($t:ty),*) => {
