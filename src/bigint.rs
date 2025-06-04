@@ -4,6 +4,7 @@ mod cmp;
 mod convert;
 mod set_val;
 mod sub;
+mod mul;
 
 use core::ops::Index;
 
@@ -12,7 +13,7 @@ use crate::biguint::BigUInt;
 /// Dynamic, arbitrary-sized signed integer type
 #[derive(Eq, PartialEq)]
 pub struct BigInt {
-	// Invariant: if val == 0, is_negative should be false
+	// Invariant: if magnitude == 0, is_negative should be false
 	is_negative: bool,
 	magnitude: BigUInt,
 }
