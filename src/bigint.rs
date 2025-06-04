@@ -3,6 +3,7 @@ mod bits;
 mod cmp;
 mod convert;
 mod set_val;
+mod sub;
 
 use core::ops::Index;
 
@@ -30,9 +31,9 @@ impl BigInt {
 		magnitude: BigUInt::ONE,
 	};
 
-	pub fn from_sign_and_magnitude(is_negative: bool, magnitude: BigUInt) -> Self {
+	pub fn from_sign_and_magnitude(mut is_negative: bool, magnitude: BigUInt) -> Self {
 		if magnitude.is_zero() {
-			return Self::ZERO;
+			is_negative = false;
 		}
 		Self {
 			is_negative,
@@ -53,6 +54,10 @@ impl BigInt {
 
 	pub fn inner(&self) -> &BigUInt {
 		&self.magnitude
+	}	
+	
+	pub unsafe fn inner_mut(&mut self) -> &mut BigUInt {
+		&mut self.magnitude
 	}
 
 	pub fn into_inner(self) -> BigUInt {
