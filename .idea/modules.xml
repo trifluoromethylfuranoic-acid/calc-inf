@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/bignums.iml" filepath="$PROJECT_DIR$/bignums.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/calc-inf.iml" filepath="$PROJECT_DIR$/.idea/calc-inf.iml" />
     </modules>
   </component>
 </project>
