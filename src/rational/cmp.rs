@@ -89,9 +89,9 @@ impl PartialOrd<Rational> for BigUInt {
 impl PartialOrd<BigInt> for Rational {
 	fn partial_cmp(&self, other: &BigInt) -> Option<Ordering> {
 		Some(match (self.is_negative(), other.is_negative()) {
-			(false, false) | (true, true) => { Ord::cmp(&self.n, &(&self.d * other)) },
-			(true, false) => { Ordering::Less },
-			(false, true) => { Ordering::Greater },
+			(false, false) | (true, true) => Ord::cmp(&self.n, &(&self.d * other)),
+			(true, false) => Ordering::Less,
+			(false, true) => Ordering::Greater,
 		})
 	}
 }
@@ -99,9 +99,9 @@ impl PartialOrd<BigInt> for Rational {
 impl PartialOrd<Rational> for BigInt {
 	fn partial_cmp(&self, other: &Rational) -> Option<Ordering> {
 		Some(match (self.is_negative(), other.is_negative()) {
-			(false, false) | (true, true) => { Ord::cmp(&(&other.d * self), &other.n) },
-			(true, false) => { Ordering::Less },
-			(false, true) => { Ordering::Greater },
+			(false, false) | (true, true) => Ord::cmp(&(&other.d * self), &other.n),
+			(true, false) => Ordering::Less,
+			(false, true) => Ordering::Greater,
 		})
 	}
 }
@@ -113,7 +113,7 @@ macro_rules! impl_partial_ord {
 				PartialOrd::partial_cmp(&self.n, &(&self.d * *other))
 			}
 		}
-	
+
 		impl PartialOrd<Rational> for $t {
 			fn partial_cmp(&self, other: &Rational) -> Option<Ordering> {
 				PartialOrd::partial_cmp(&(&other.d * *self), &other.n)
@@ -174,4 +174,3 @@ mod tests {
 		assert!(r < BigUInt::from(8u32));
 	}
 }
-

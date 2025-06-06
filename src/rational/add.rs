@@ -1,4 +1,5 @@
 use core::ops::{Add, AddAssign};
+
 use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 use crate::rational::Rational;
@@ -7,10 +8,7 @@ impl Add<&Rational> for &Rational {
 	type Output = Rational;
 
 	fn add(self, rhs: &Rational) -> Self::Output {
-		Rational::new(
-			&self.n * &rhs.d + &(&rhs.n * &self.d),
-			&self.d * &rhs.d
-		)
+		Rational::new(&self.n * &rhs.d + &(&rhs.n * &self.d), &self.d * &rhs.d)
 	}
 }
 
@@ -99,4 +97,3 @@ mod tests {
 		assert_eq!(*a.denominator(), BigUInt::from(2u64));
 	}
 }
-

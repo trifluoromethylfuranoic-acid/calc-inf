@@ -1,7 +1,9 @@
+mod add;
 mod cmp;
 mod convert;
+mod div;
+mod mul;
 mod set_val;
-mod add;
 mod sub;
 
 use crate::bigint::BigInt;
