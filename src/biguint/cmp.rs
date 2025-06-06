@@ -1,6 +1,5 @@
 use core::cmp::Ordering;
 
-use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 
 impl PartialOrd for BigUInt {
@@ -19,22 +18,6 @@ impl Ord for BigUInt {
 			{
 				Iterator::cmp(self.data.iter().rev(), other.data.iter().rev())
 			}
-		}
-	}
-}
-
-impl PartialEq<BigInt> for BigUInt {
-	fn eq(&self, other: &BigInt) -> bool {
-		!other.is_negative() && *other.inner() == *self
-	}
-}
-
-impl PartialOrd<BigInt> for BigUInt {
-	fn partial_cmp(&self, other: &BigInt) -> Option<Ordering> {
-		if other.is_negative() {
-			Some(Ordering::Greater)
-		} else {
-			self.partial_cmp(other.inner())
 		}
 	}
 }

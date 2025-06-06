@@ -1,4 +1,5 @@
 use core::ops::{Mul, MulAssign};
+
 use crate::bigint::BigInt;
 use crate::biguint::{BigUInt, MulTo};
 
@@ -85,10 +86,10 @@ macro_rules! impl_mul {
 				*self *= &BigInt::from(rhs);
 			}
 		}
-	
+
 		impl Mul<$t> for &BigInt {
 			type Output = BigInt;
-			
+
 			fn mul(self, rhs: $t) -> Self::Output {
 				self * &BigInt::from(rhs)
 			}
@@ -96,7 +97,7 @@ macro_rules! impl_mul {
 
 		impl Mul<&BigInt> for $t {
 			type Output = BigInt;
-			
+
 			fn mul(self, rhs: &BigInt) -> Self::Output {
 				&BigInt::from(self) * rhs
 			}
@@ -123,7 +124,7 @@ mod tests {
 		let a = BigInt::from(-100);
 		let b = BigInt::from(-200);
 		assert_eq!(&a * &b, BigInt::from(20000));
-		
+
 		let a = BigInt::from(0);
 		let b = BigInt::from(-200);
 		assert_eq!(&a * &b, BigInt::from(0));
@@ -153,6 +154,3 @@ mod tests {
 		assert_eq!(b, BigInt::from(20000));
 	}
 }
-
-
-

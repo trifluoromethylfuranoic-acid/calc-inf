@@ -30,6 +30,12 @@ impl PartialEq<BigUInt> for BigInt {
 	}
 }
 
+impl PartialEq<BigInt> for BigUInt {
+	fn eq(&self, other: &BigInt) -> bool {
+		!other.is_negative() && *other.inner() == *self
+	}
+}
+
 impl PartialOrd for BigInt {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		Some(self.cmp(other))
@@ -58,6 +64,16 @@ impl PartialOrd<BigUInt> for BigInt {
 			Some(Ordering::Less)
 		} else {
 			self.magnitude.partial_cmp(other)
+		}
+	}
+}
+
+impl PartialOrd<BigInt> for BigUInt {
+	fn partial_cmp(&self, other: &BigInt) -> Option<Ordering> {
+		if other.is_negative() {
+			Some(Ordering::Greater)
+		} else {
+			self.partial_cmp(other.inner())
 		}
 	}
 }

@@ -133,18 +133,18 @@ macro_rules! impl_sub {
 				*self -= &BigInt::from(rhs);
 			}
 		}
-	
+
 		impl Sub<$t> for BigInt {
 			type Output = BigInt;
-			
+
 			fn sub(self, rhs: $t) -> Self::Output {
 				self - &BigInt::from(rhs)
 			}
 		}
-	
+
 		impl Sub<BigInt> for $t {
 			type Output = BigInt;
-			
+
 			fn sub(self, rhs: BigInt) -> Self::Output {
 				&BigInt::from(self) - rhs
 			}
@@ -202,4 +202,3 @@ mod tests {
 		a -= &b;
 	}
 }
-

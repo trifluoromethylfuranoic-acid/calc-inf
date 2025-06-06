@@ -1,6 +1,7 @@
+use core::ops::{Div, Rem};
+
 use crate::bigint::BigInt;
 use crate::biguint::{BigUInt, DivRem};
-use core::ops::{Div, Rem};
 
 impl DivRem for &mut BigInt {
 	type Output = BigInt;
@@ -13,7 +14,8 @@ impl DivRem for &mut BigInt {
 	}
 
 	fn div_rem_to(self, d: &mut BigInt, q: &mut Self::Output, r: &mut Self::Output) {
-		self.magnitude.div_rem_to(&mut d.magnitude, &mut q.magnitude, &mut r.magnitude);
+		self.magnitude
+			.div_rem_to(&mut d.magnitude, &mut q.magnitude, &mut r.magnitude);
 		q.is_negative = self.is_negative() ^ d.is_negative();
 		r.is_negative = self.is_negative();
 
@@ -33,7 +35,8 @@ impl DivRem<&mut BigUInt> for &mut BigInt {
 	}
 
 	fn div_rem_to(self, d: &mut BigUInt, q: &mut Self::Output, r: &mut Self::Output) {
-		self.magnitude.div_rem_to(d, &mut q.magnitude, &mut r.magnitude);
+		self.magnitude
+			.div_rem_to(d, &mut q.magnitude, &mut r.magnitude);
 		q.is_negative = self.is_negative();
 		r.is_negative = self.is_negative();
 
@@ -247,5 +250,3 @@ mod tests {
 		let _ = a.div_rem(&mut b);
 	}
 }
-
-

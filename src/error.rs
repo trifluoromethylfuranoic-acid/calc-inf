@@ -45,3 +45,26 @@ impl Display for TryIntoIntError {
 }
 
 impl Error for TryIntoIntError {}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum TryFromFloatError {
+	NaN,
+	Infinite,
+}
+
+impl Display for TryFromFloatError {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		write!(
+			f,
+			"{}",
+			match self {
+				TryFromFloatError::NaN => {
+					"NaN is not a valid floating-point number"
+				}
+				TryFromFloatError::Infinite => {
+					"infinity is not a valid floating-point number"
+				}
+			}
+		)
+	}
+}

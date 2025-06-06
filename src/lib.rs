@@ -3,12 +3,12 @@
 #![cfg_attr(not(test), no_std)]
 
 extern crate alloc;
-#[macro_use]
 extern crate smallvec;
 
 pub mod bigint;
 pub mod biguint;
 pub mod error;
+pub mod rational;
 mod util;
 
 /// Trait for setting the value of self to some other value

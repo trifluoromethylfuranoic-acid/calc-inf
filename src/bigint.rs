@@ -2,17 +2,18 @@ mod add;
 mod bits;
 mod cmp;
 mod convert;
-mod set_val;
-mod sub;
-mod mul;
 mod div;
+mod mul;
+mod set_val;
+mod str;
+mod sub;
 
 use core::ops::Index;
 
 use crate::biguint::BigUInt;
 
 /// Dynamic, arbitrary-sized signed integer type
-#[derive(Eq, PartialEq, Debug, Hash)]
+#[derive(Eq, PartialEq, Hash)]
 pub struct BigInt {
 	// Invariant: if magnitude == 0, is_negative should be false
 	is_negative: bool,
@@ -56,8 +57,8 @@ impl BigInt {
 
 	pub fn inner(&self) -> &BigUInt {
 		&self.magnitude
-	}	
-	
+	}
+
 	pub unsafe fn inner_mut(&mut self) -> &mut BigUInt {
 		&mut self.magnitude
 	}
@@ -72,6 +73,15 @@ impl BigInt {
 
 	pub fn set_zero(&mut self) {
 		self.magnitude.set_zero();
+		self.is_negative = false;
+	}
+
+	pub fn is_one(&self) -> bool {
+		self.magnitude.is_one() && !self.is_negative
+	}
+
+	pub fn set_one(&mut self) {
+		self.magnitude.set_one();
 		self.is_negative = false;
 	}
 
@@ -92,7 +102,7 @@ impl BigInt {
 	pub fn unsigned_abs(&self) -> BigUInt {
 		self.magnitude.clone()
 	}
-	
+
 	fn normalize(&mut self) {
 		if self.is_zero() {
 			self.is_negative = false;

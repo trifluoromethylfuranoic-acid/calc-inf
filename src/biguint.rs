@@ -13,9 +13,9 @@ mod set_val;
 mod str;
 mod sub;
 
+pub use div::*;
 pub use mul::*;
 pub use sub::*;
-pub use div::*;
 
 type Data = SmallVec<[u64; 2]>;
 
@@ -46,11 +46,11 @@ impl BigUInt {
 		self.data.capacity()
 	}
 
-	pub fn as_inner(&self) -> &SmallVec<[u64; 2]> {
+	pub fn inner(&self) -> &SmallVec<[u64; 2]> {
 		&self.data
 	}
 
-	pub unsafe fn as_inner_mut(&mut self) -> &mut SmallVec<[u64; 2]> {
+	pub unsafe fn inner_mut(&mut self) -> &mut SmallVec<[u64; 2]> {
 		&mut self.data
 	}
 
@@ -64,6 +64,15 @@ impl BigUInt {
 
 	pub fn set_zero(&mut self) {
 		self.data.clear();
+	}
+
+	pub fn is_one(&self) -> bool {
+		self.data.len() == 1 && self.data[0] == 1
+	}
+
+	pub fn set_one(&mut self) {
+		self.data.clear();
+		self.data.push(1u64);
 	}
 
 	fn truncate_leading_zeros(&mut self) {

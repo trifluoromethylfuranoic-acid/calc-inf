@@ -31,25 +31,25 @@ impl Display for BigUInt {
 
 impl LowerHex for BigUInt {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		f.pad_integral(true, "", &self.to_string_radix(16, false))
+		f.pad_integral(true, "0x", &self.to_string_radix(16, false))
 	}
 }
 
 impl UpperHex for BigUInt {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		f.pad_integral(true, "", &self.to_string_radix(16, true))
+		f.pad_integral(true, "0x", &self.to_string_radix(16, true))
 	}
 }
 
 impl Octal for BigUInt {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		f.pad_integral(true, "", &self.to_string_radix(8, false))
+		f.pad_integral(true, "0o", &self.to_string_radix(8, false))
 	}
 }
 
 impl Binary for BigUInt {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		f.pad_integral(true, "", &self.to_string_radix(2, false))
+		f.pad_integral(true, "0b", &self.to_string_radix(2, false))
 	}
 }
 
