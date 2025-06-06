@@ -5,8 +5,8 @@ mod div;
 mod mul;
 mod round;
 mod set_val;
-mod sub;
 mod str;
+mod sub;
 
 use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
@@ -87,12 +87,14 @@ impl Rational {
 		self.n.is_negative()
 	}
 
-	pub fn is_positive(&self) -> bool { !self.is_negative() }
-	
+	pub fn is_positive(&self) -> bool {
+		!self.is_negative()
+	}
+
 	pub fn set_sign(&mut self, is_negative: bool) {
 		self.n.set_sign(is_negative);
 	}
-	
+
 	pub fn abs_in_place(&mut self) {
 		self.n.abs_in_place();
 	}

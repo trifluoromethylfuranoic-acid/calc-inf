@@ -8,6 +8,7 @@ mod cmp;
 mod convert;
 mod convert_data;
 mod div;
+mod exp;
 mod mul;
 mod set_val;
 mod str;

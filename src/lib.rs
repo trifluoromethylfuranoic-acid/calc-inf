@@ -1,5 +1,6 @@
 #![feature(box_vec_non_null)]
 #![feature(assert_matches)]
+#![feature(slice_split_once)]
 #![cfg_attr(not(test), no_std)]
 
 extern crate alloc;
