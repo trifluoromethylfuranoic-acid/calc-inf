@@ -33,6 +33,13 @@ impl BigUInt {
 		self.data.copy_within(digits.., 0);
 		self.data.truncate(self.len() - digits);
 	}
+
+	pub fn not_in_place(&mut self) {
+		for x in self.data.iter_mut() {
+			*x = !*x;
+		}
+		self.truncate_leading_zeros();
+	}
 }
 
 macro_rules! impl_shl {
@@ -231,10 +238,7 @@ impl Not for BigUInt {
 	type Output = BigUInt;
 
 	fn not(mut self) -> Self::Output {
-		for x in self.data.iter_mut() {
-			*x = !*x;
-		}
-		self.truncate_leading_zeros();
+		self.not_in_place();
 		self
 	}
 }

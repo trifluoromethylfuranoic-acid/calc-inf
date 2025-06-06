@@ -17,7 +17,7 @@ use crate::biguint::BigUInt;
 pub struct BigInt {
 	// Invariant: if magnitude == 0, is_negative should be false
 	is_negative: bool,
-	magnitude: BigUInt,
+	pub(crate) magnitude: BigUInt,
 }
 
 impl BigInt {
@@ -89,6 +89,14 @@ impl BigInt {
 		self.is_negative
 	}
 
+	pub fn is_positive(&self) -> bool { !self.is_negative() }
+	
+	pub fn set_sign(&mut self, is_negative: bool) {
+		if !self.is_zero() {
+			self.is_negative = is_negative;
+		}
+	}
+	
 	pub fn abs_in_place(&mut self) {
 		self.is_negative = false;
 	}
