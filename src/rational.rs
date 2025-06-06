@@ -1,6 +1,8 @@
 mod cmp;
 mod convert;
 mod set_val;
+mod add;
+mod sub;
 
 use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
@@ -79,5 +81,14 @@ impl Rational {
 
 	pub fn is_negative(&self) -> bool {
 		self.n.is_negative()
+	}
+
+	pub fn abs_in_place(&mut self) {
+		self.n.abs_in_place();
+	}
+
+	pub fn abs(mut self) -> Self {
+		self.abs_in_place();
+		self
 	}
 }

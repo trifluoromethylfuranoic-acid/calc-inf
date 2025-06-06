@@ -93,14 +93,13 @@ impl BigInt {
 		self.is_negative = false;
 	}
 
-	pub fn abs(&self) -> Self {
-		let mut x = self.clone();
-		x.abs_in_place();
-		x
+	pub fn abs(mut self) -> Self {
+		self.abs_in_place();
+		self
 	}
 
-	pub fn unsigned_abs(&self) -> BigUInt {
-		self.magnitude.clone()
+	pub fn unsigned_abs(self) -> BigUInt {
+		self.magnitude
 	}
 
 	fn normalize(&mut self) {

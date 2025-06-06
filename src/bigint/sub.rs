@@ -25,14 +25,9 @@ impl BigInt {
 impl Neg for BigInt {
 	type Output = Self;
 
-	fn neg(self) -> Self::Output {
-		if self.magnitude.is_zero() {
-			return self;
-		}
-		Self {
-			is_negative: !self.is_negative(),
-			magnitude: self.magnitude,
-		}
+	fn neg(mut self) -> Self::Output {
+		self.neg_in_place();
+		self
 	}
 }
 
