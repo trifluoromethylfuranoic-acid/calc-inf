@@ -1,5 +1,5 @@
-use crate::biguint::{BigUInt, DivRem};
 use crate::SetVal;
+use crate::biguint::{BigUInt, DivRem};
 
 impl BigUInt {
 	pub fn gcd(self, other: BigUInt) -> BigUInt {
@@ -9,7 +9,7 @@ impl BigUInt {
 		let mut tmp1 = BigUInt::ZERO;
 		let mut tmp2 = BigUInt::ZERO;
 		let mut tmp3 = BigUInt::ZERO;
-		
+
 		while !b.is_zero() {
 			tmp1.set_val(&b);
 			(&mut a).div_rem_to(&mut b, &mut tmp3, &mut tmp2);
@@ -19,11 +19,11 @@ impl BigUInt {
 
 		a
 	}
-	
+
 	pub fn lcm(self, other: BigUInt) -> BigUInt {
 		&mut (&self * &other) / &mut self.gcd(other)
 	}
-	
+
 	pub fn factorial(&self) -> BigUInt {
 		assert!(self.len() <= 1, "factorial is too big");
 		let mut result = BigUInt::ONE;
@@ -73,4 +73,3 @@ mod tests {
 		assert_eq!(BigUInt::from(5u32).factorial(), BigUInt::from(120u32));
 	}
 }
-

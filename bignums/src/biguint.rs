@@ -10,10 +10,10 @@ mod convert_data;
 mod div;
 mod exp;
 mod mul;
+mod num_theory;
 mod set_val;
 mod str;
 mod sub;
-mod num_theory;
 
 pub use div::*;
 pub use mul::*;

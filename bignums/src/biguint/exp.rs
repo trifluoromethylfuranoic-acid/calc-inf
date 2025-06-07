@@ -1,5 +1,5 @@
-use crate::biguint::{BigUInt, MulTo};
 use crate::SetVal;
+use crate::biguint::{BigUInt, MulTo};
 
 impl BigUInt {
 	pub fn pow(&self, mut power: u64) -> Self {
@@ -12,11 +12,11 @@ impl BigUInt {
 				res.set_val(&tmp);
 			}
 			power >>= 1;
-			
+
 			tmp.mul_to(&power_of_self, &power_of_self);
 			power_of_self.set_val(&tmp);
 		}
-		
+
 		res
 	}
 

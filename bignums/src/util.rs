@@ -1,4 +1,5 @@
 use core::iter;
+use core::num::FpCategory;
 
 use smallvec::SmallVec;
 
@@ -94,8 +95,75 @@ pub(crate) fn carrying_mul(lhs: u64, rhs: u64) -> (u64, u64) {
 	(lo, hi)
 }
 
+pub(crate) fn f32_parts(val: f32) -> Result<(bool, u32, i32), TryFromFloatError> {
+	// f32: 1-bit sign, 8-bits exponent (biased by 127), 23-bits mantissa (leading 1 not stored)
+	const MANTISSA_MASK: u32 = (1u32 << 23) - 1u32;
+	const MANTISSA_MISSING_ONE_MASK: u32 = 1u32 << 23;
+	const EXPONENT_MASK: u32 = (1u32 << 8) - 1u32;
+	const EXPONENT_BIAS: i32 = -127i32;
+
+	match val.classify() {
+		FpCategory::Nan => Err(TryFromFloatError::NaN),
+		FpCategory::Infinite => Err(TryFromFloatError::Infinite),
+		FpCategory::Zero => Ok((false, 0, 0)),
+		FpCategory::Subnormal => {
+			let bits = val.to_bits();
+			let is_negative = val.is_sign_negative();
+			let mut exp = EXPONENT_BIAS + 1;
+			let mut mant = bits & MANTISSA_MASK;
+			// we shift so the implicit fixed point is after the leading 1 and correct
+			// the exponent respectively
+			let shift = mant.leading_zeros() - 8;
+			mant <<= shift;
+			exp -= shift as i32;
+			Ok((is_negative, mant, exp))
+		}
+		FpCategory::Normal => {
+			let bits = val.to_bits();
+			let is_negative = val.is_sign_negative();
+			let exp = ((bits >> 23) & EXPONENT_MASK) as i32 + EXPONENT_BIAS;
+			let mant = bits & MANTISSA_MASK | MANTISSA_MISSING_ONE_MASK;
+			Ok((is_negative, mant, exp))
+		}
+	}
+}
+
+pub(crate) fn f64_parts(val: f64) -> Result<(bool, u64, i64), TryFromFloatError> {
+	// f64: 1-bit sign, 11-bits exponent (biased by 1023), 52-bits mantissa (leading 1 not stored)
+	const MANTISSA_MASK: u64 = (1u64 << 52) - 1u64;
+	const MANTISSA_MISSING_ONE_MASK: u64 = 1u64 << 52;
+	const EXPONENT_MASK: u64 = (1u64 << 11) - 1u64;
+	const EXPONENT_BIAS: i64 = -1023i64;
+
+	match val.classify() {
+		FpCategory::Nan => Err(TryFromFloatError::NaN),
+		FpCategory::Infinite => Err(TryFromFloatError::Infinite),
+		FpCategory::Zero => Ok((false, 0, 0)),
+		FpCategory::Subnormal => {
+			let bits = val.to_bits();
+			let is_negative = val.is_sign_negative();
+			let mut exp = EXPONENT_BIAS + 1;
+			let mut mant = bits & MANTISSA_MASK;
+			// we shift so the implicit fixed point is after the leading 1 and correct
+			// the exponent respectively
+			let shift = mant.leading_zeros() - 11;
+			mant <<= shift;
+			exp -= shift as i64;
+			Ok((is_negative, mant, exp))
+		}
+		FpCategory::Normal => {
+			let bits = val.to_bits();
+			let is_negative = val.is_sign_negative();
+			let exp = ((bits >> 52) & EXPONENT_MASK) as i64 + EXPONENT_BIAS;
+			let mant = bits & MANTISSA_MASK | MANTISSA_MISSING_ONE_MASK;
+			Ok((is_negative, mant, exp))
+		}
+	}
+}
+
 #[cfg(test)]
 use crate::biguint::BigUInt;
+use crate::error::TryFromFloatError;
 
 #[cfg(test)]
 pub(crate) fn to_foreign_biguint(a: BigUInt) -> num_bigint::BigUint {
@@ -129,5 +197,24 @@ mod tests {
 		let (x, y) = carrying_mul(a, b);
 		let res = u64s_to_u128([x, y]);
 		assert_eq!(res, res_u128);
+	}
+
+	#[test]
+	fn test_f32_parts_normal() {
+		let (sign, mant, exp) = f32_parts(3.14159).unwrap();
+		assert!(!sign);
+		assert_eq!(exp, 1);
+		assert_eq!(mant, 0b1100_1001_0000_1111_1101_0000);
+	}
+
+	#[test]
+	fn test_f64_parts_normal() {
+		let (sign, mant, exp) = f64_parts(3.14159).unwrap();
+		assert!(!sign);
+		assert_eq!(exp, 1);
+		assert_eq!(
+			mant,
+			0b1_1001_0010_0001_1111_1001_1111_0000_0001_1011_1000_0110_0110_1110
+		);
 	}
 }

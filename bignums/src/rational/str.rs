@@ -8,7 +8,7 @@ use crate::rational::Rational;
 
 impl FromStr for Rational {
 	type Err = ParseRationalError;
-	
+
 	fn from_str(src: &str) -> Result<Self, Self::Err> {
 		Self::from_fraction_str(src)
 	}

@@ -6,6 +6,7 @@
 extern crate alloc;
 extern crate smallvec;
 
+pub mod bigfloat;
 pub mod bigint;
 pub mod biguint;
 pub mod error;

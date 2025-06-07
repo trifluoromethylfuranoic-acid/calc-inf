@@ -102,7 +102,7 @@ impl Rational {
 		self.abs_in_place();
 		self
 	}
-	
+
 	pub fn reduce(&mut self) {
 		let mut gcd = self.n.clone().unsigned_abs().gcd(self.d.clone());
 		self.n = &mut self.n / &mut BigInt::from(gcd.clone());
@@ -113,6 +113,7 @@ impl Rational {
 #[cfg(test)]
 mod tests {
 	use alloc::string::ToString;
+
 	use super::*;
 
 	#[test]
