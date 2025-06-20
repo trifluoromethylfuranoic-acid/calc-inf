@@ -7,7 +7,7 @@ use crate::{SetVal, TrySetVal, util};
 impl SetVal<&BigFloat> for BigFloat {
 	fn set_val(&mut self, src: &BigFloat) {
 		self.m.set_val(&src.m);
-		self.e.set_val(&src.e);
+		self.e = src.e;
 	}
 }
 
@@ -18,8 +18,8 @@ impl SetVal<&BigUInt> for BigFloat {
 			return;
 		}
 		self.m.set_val(src);
-		self.m >>= src.trailing_zeros();
-		self.e.set_val(src.ilog2());
+		self.e = 0;
+		self.normalize();
 	}
 }
 
@@ -30,8 +30,8 @@ impl SetVal<&BigInt> for BigFloat {
 			return;
 		}
 		self.m.set_val(src);
-		self.m >>= src.magnitude.trailing_zeros();
-		self.e.set_val(src.magnitude.ilog2());
+		self.e = 0;
+		self.normalize();
 	}
 }
 
@@ -51,11 +51,11 @@ impl TrySetVal<f32> for BigFloat {
 	type Error = TryFromFloatError;
 
 	fn try_set_val(&mut self, src: f32) -> Result<(), Self::Error> {
-		let (is_negative, mut m, e) = util::f32_parts(src)?;
-		m >>= m.trailing_zeros();
+		let (is_negative, m, e) = util::f32_to_parts(src)?;
 		self.m.set_val(m);
 		self.m.set_sign(is_negative);
-		self.e.set_val(e);
+		self.e = e as i64 - m.ilog2() as i64;
+		self.normalize();
 		Ok(())
 	}
 }
@@ -64,12 +64,25 @@ impl TrySetVal<f64> for BigFloat {
 	type Error = TryFromFloatError;
 
 	fn try_set_val(&mut self, src: f64) -> Result<(), Self::Error> {
-		let (is_negative, mut m, e) = util::f64_parts(src)?;
-		m >>= m.trailing_zeros();
+		let (is_negative, m, e) = util::f64_to_parts(src)?;
 		self.m.set_val(m);
 		self.m.set_sign(is_negative);
-		self.e.set_val(e);
+		self.e = e - m.ilog2() as i64;
+		self.normalize();
 		Ok(())
+	}
+}
+
+impl Clone for BigFloat {
+	fn clone(&self) -> Self {
+		Self {
+			m: self.m.clone(),
+			e: self.e,
+		}
+	}
+
+	fn clone_from(&mut self, source: &Self) {
+		self.set_val(source);
 	}
 }
 
@@ -83,7 +96,7 @@ mod tests {
 		let b = BigUInt::from(123u32);
 		a.set_val(&b);
 		assert_eq!(a.mantissa(), &BigInt::from(123));
-		assert_eq!(a.exponent(), &BigInt::from(6));
+		assert_eq!(a.exponent(), 0);
 	}
 
 	#[test]
@@ -92,7 +105,7 @@ mod tests {
 		let b = BigInt::from(-123);
 		a.set_val(&b);
 		assert_eq!(a.mantissa(), &BigInt::from(-123));
-		assert_eq!(a.exponent(), &BigInt::from(6));
+		assert_eq!(a.exponent(), 0);
 	}
 
 	#[test]
@@ -100,6 +113,6 @@ mod tests {
 		let mut a = BigFloat::ZERO;
 		a.set_val(123i32);
 		assert_eq!(a.mantissa(), &BigInt::from(123));
-		assert_eq!(a.exponent(), &BigInt::from(6));
+		assert_eq!(a.exponent(), 0);
 	}
 }

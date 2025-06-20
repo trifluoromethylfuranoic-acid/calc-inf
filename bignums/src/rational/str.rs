@@ -3,7 +3,7 @@ use core::str::FromStr;
 
 use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
-use crate::error::{ParseIntError, ParseRationalError};
+use crate::error::ParseRationalError;
 use crate::rational::Rational;
 
 impl FromStr for Rational {
@@ -57,8 +57,8 @@ impl Rational {
 
 	pub fn from_fraction_ascii_radix(src: &[u8], radix: u32) -> Result<Self, ParseRationalError> {
 		if let Some((n_str, d_str)) = src.split_once(|&c| c == b'/') {
-			let n = BigInt::from_ascii(n_str).map_err(|e| e.to_rational_error())?;
-			let d = BigUInt::from_ascii(d_str).map_err(|e| e.to_rational_error())?;
+			let n = BigInt::from_ascii_radix(n_str, radix).map_err(|e| e.to_rational_error())?;
+			let d = BigUInt::from_ascii_radix(d_str, radix).map_err(|e| e.to_rational_error())?;
 			if d.is_zero() {
 				Err(ParseRationalError::DenominatorZero)
 			} else {
@@ -66,7 +66,7 @@ impl Rational {
 			}
 		} else {
 			Ok(Self::from(
-				BigInt::from_ascii(src).map_err(|e| e.to_rational_error())?,
+				BigInt::from_ascii_radix(src, radix).map_err(|e| e.to_rational_error())?,
 			))
 		}
 	}

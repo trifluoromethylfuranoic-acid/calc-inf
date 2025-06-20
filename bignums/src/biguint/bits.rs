@@ -89,15 +89,10 @@ impl BigUInt {
 	/// Return the number of leading zeros in the binary representation of the number.
 	/// For 0 returns 0
 	pub fn leading_zeros(&self) -> u64 {
-		let mut res = 0u64;
-		for &digit in self.data.iter().rev() {
-			if digit == 0 {
-				res += u64::BITS as u64;
-			} else {
-				return res + digit.leading_zeros() as u64;
-			}
-		}
-		res
+		self.data
+			.last()
+			.map(|&x| x.leading_zeros() as u64)
+			.unwrap_or(0)
 	}
 
 	/// Return the number of leading ones in the binary representation of the number.
@@ -113,7 +108,6 @@ impl BigUInt {
 		res
 	}
 }
-
 macro_rules! impl_shl {
 	($($t:ty),*) => {$(
 		impl Shl<$t> for BigUInt {

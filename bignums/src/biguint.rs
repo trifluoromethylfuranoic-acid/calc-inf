@@ -26,7 +26,7 @@ type Data = SmallVec<[u64; 2]>;
 pub struct BigUInt {
 	// Little-endian
 	// Invariant: no leading zero digits
-	data: Data,
+	pub(crate) data: Data,
 }
 
 impl BigUInt {

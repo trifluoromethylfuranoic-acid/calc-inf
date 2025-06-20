@@ -14,8 +14,8 @@ use crate::biguint::BigUInt;
 /// Dynamic, arbitrary-sized rational type
 pub struct Rational {
 	// Invariant: d != 0
-	n: BigInt,
-	d: BigUInt,
+	pub(crate) n: BigInt,
+	pub(crate) d: BigUInt,
 }
 
 impl Rational {

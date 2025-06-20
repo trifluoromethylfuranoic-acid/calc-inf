@@ -95,12 +95,16 @@ pub(crate) fn carrying_mul(lhs: u64, rhs: u64) -> (u64, u64) {
 	(lo, hi)
 }
 
-pub(crate) fn f32_parts(val: f32) -> Result<(bool, u32, i32), TryFromFloatError> {
+/// Converts f32 to (is_negative, mantissa, exponent)
+/// Returns Err for NaN and infinities
+/// In the resulting mantissa the binary point is after the leading 1 bit (currently always at position 9)
+/// The exponent is debiased
+pub(crate) fn f32_to_parts(val: f32) -> Result<(bool, u32, i32), TryFromFloatError> {
 	// f32: 1-bit sign, 8-bits exponent (biased by 127), 23-bits mantissa (leading 1 not stored)
 	const MANTISSA_MASK: u32 = (1u32 << 23) - 1u32;
 	const MANTISSA_MISSING_ONE_MASK: u32 = 1u32 << 23;
 	const EXPONENT_MASK: u32 = (1u32 << 8) - 1u32;
-	const EXPONENT_BIAS: i32 = -127i32;
+	const EXPONENT_DEBIAS: i32 = -127i32;
 
 	match val.classify() {
 		FpCategory::Nan => Err(TryFromFloatError::NaN),
@@ -109,7 +113,7 @@ pub(crate) fn f32_parts(val: f32) -> Result<(bool, u32, i32), TryFromFloatError>
 		FpCategory::Subnormal => {
 			let bits = val.to_bits();
 			let is_negative = val.is_sign_negative();
-			let mut exp = EXPONENT_BIAS + 1;
+			let mut exp = EXPONENT_DEBIAS + 1;
 			let mut mant = bits & MANTISSA_MASK;
 			// we shift so the implicit fixed point is after the leading 1 and correct
 			// the exponent respectively
@@ -121,19 +125,23 @@ pub(crate) fn f32_parts(val: f32) -> Result<(bool, u32, i32), TryFromFloatError>
 		FpCategory::Normal => {
 			let bits = val.to_bits();
 			let is_negative = val.is_sign_negative();
-			let exp = ((bits >> 23) & EXPONENT_MASK) as i32 + EXPONENT_BIAS;
+			let exp = ((bits >> 23) & EXPONENT_MASK) as i32 + EXPONENT_DEBIAS;
 			let mant = bits & MANTISSA_MASK | MANTISSA_MISSING_ONE_MASK;
 			Ok((is_negative, mant, exp))
 		}
 	}
 }
 
-pub(crate) fn f64_parts(val: f64) -> Result<(bool, u64, i64), TryFromFloatError> {
+/// Converts f64 to (is_negative, mantissa, exponent)
+/// Returns Err for NaN and infinities
+/// In the resulting mantissa the binary point is after the leading 1 bit (currently always at position 12)
+/// The exponent is debiased
+pub(crate) fn f64_to_parts(val: f64) -> Result<(bool, u64, i64), TryFromFloatError> {
 	// f64: 1-bit sign, 11-bits exponent (biased by 1023), 52-bits mantissa (leading 1 not stored)
 	const MANTISSA_MASK: u64 = (1u64 << 52) - 1u64;
 	const MANTISSA_MISSING_ONE_MASK: u64 = 1u64 << 52;
 	const EXPONENT_MASK: u64 = (1u64 << 11) - 1u64;
-	const EXPONENT_BIAS: i64 = -1023i64;
+	const EXPONENT_DEBIAS: i64 = -1023i64;
 
 	match val.classify() {
 		FpCategory::Nan => Err(TryFromFloatError::NaN),
@@ -142,7 +150,7 @@ pub(crate) fn f64_parts(val: f64) -> Result<(bool, u64, i64), TryFromFloatError>
 		FpCategory::Subnormal => {
 			let bits = val.to_bits();
 			let is_negative = val.is_sign_negative();
-			let mut exp = EXPONENT_BIAS + 1;
+			let mut exp = EXPONENT_DEBIAS + 1;
 			let mut mant = bits & MANTISSA_MASK;
 			// we shift so the implicit fixed point is after the leading 1 and correct
 			// the exponent respectively
@@ -154,10 +162,103 @@ pub(crate) fn f64_parts(val: f64) -> Result<(bool, u64, i64), TryFromFloatError>
 		FpCategory::Normal => {
 			let bits = val.to_bits();
 			let is_negative = val.is_sign_negative();
-			let exp = ((bits >> 52) & EXPONENT_MASK) as i64 + EXPONENT_BIAS;
+			let exp = ((bits >> 52) & EXPONENT_MASK) as i64 + EXPONENT_DEBIAS;
 			let mant = bits & MANTISSA_MASK | MANTISSA_MISSING_ONE_MASK;
 			Ok((is_negative, mant, exp))
 		}
+	}
+}
+
+/// Assembles a float from parts
+/// Returns infinity for large exponents and zero for small ones
+/// Treats the mantissa as if the binary point was after the leading 1 bit
+/// The exponent is debiased
+pub(crate) fn f32_from_parts(is_negative: bool, mut mant: u32, exp: i32) -> f32 {
+	// f32: 1-bit sign, 8-bits exponent (biased by 127), 23-bits mantissa (leading 1 not stored)
+	const MAX_EXPONENT: i32 = 127;
+	const MIN_NORMAL_EXPONENT: i32 = -126;
+	const MIN_EXPONENT: i32 = -149;
+	const MANTISSA_MASK: u32 = (1u32 << 23) - 1u32;
+	const EXPONENT_BIAS: i32 = 127i32;
+
+	if mant == 0 {
+		return if is_negative { -0.0_f32 } else { 0.0_f32 };
+	}
+
+	// Put leading 1 bit at position 9
+	let shift = mant.leading_zeros() as i32 - 8i32;
+	if shift > 0 {
+		mant <<= shift;
+	} else {
+		mant >>= -shift;
+	}
+
+	if exp > MAX_EXPONENT {
+		if is_negative {
+			f32::NEG_INFINITY
+		} else {
+			f32::INFINITY
+		}
+	} else if exp < MIN_EXPONENT {
+		if is_negative { -0.0_f32 } else { 0.0_f32 }
+	} else if exp < MIN_NORMAL_EXPONENT {
+		let shift = MIN_NORMAL_EXPONENT - exp;
+		let mant_corrected = (mant >> shift) & MANTISSA_MASK;
+		let sign = if is_negative { 1u32 } else { 0u32 } << 31;
+		let bits = sign | mant_corrected;
+		f32::from_bits(bits)
+	} else {
+		let mant_corrected = mant & MANTISSA_MASK;
+		let exp_corrected = ((exp + EXPONENT_BIAS) << 23) as u32;
+		let sign = if is_negative { 1u32 } else { 0u32 } << 31;
+		let bits = sign | exp_corrected | mant_corrected;
+		f32::from_bits(bits)
+	}
+}
+
+/// Assembles a float from parts
+/// Returns infinity for large exponents and zero for small ones
+/// Treats the mantissa as if the binary point was after the leading 1 bit
+/// The exponent is debiased
+pub(crate) fn f64_from_parts(is_negative: bool, mut mant: u64, exp: i64) -> f64 {
+	// f64: 1-bit sign, 11-bits exponent (biased by 1023), 52-bits mantissa (leading 1 not stored)
+	const MAX_EXPONENT: i64 = 1023;
+	const MIN_NORMAL_EXPONENT: i64 = -1022;
+	const MIN_EXPONENT: i64 = -1074;
+	const MANTISSA_MASK: u64 = (1u64 << 52) - 1u64;
+	const EXPONENT_BIAS: i64 = 1023i64;
+
+	if mant == 0 {
+		return if is_negative { -0.0_f64 } else { 0.0_f64 };
+	}
+
+	let shift = mant.leading_zeros() as i64 - 11i64;
+	if shift > 0 {
+		mant <<= shift;
+	} else {
+		mant >>= -shift;
+	}
+
+	if exp > MAX_EXPONENT {
+		if is_negative {
+			f64::NEG_INFINITY
+		} else {
+			f64::INFINITY
+		}
+	} else if exp < MIN_EXPONENT {
+		if is_negative { -0.0_f64 } else { 0.0_f64 }
+	} else if exp < MIN_NORMAL_EXPONENT {
+		let shift = MIN_NORMAL_EXPONENT - exp;
+		let mant_corrected = (mant >> shift) & MANTISSA_MASK;
+		let sign = if is_negative { 1u64 } else { 0u64 } << 63;
+		let bits = sign | mant_corrected;
+		f64::from_bits(bits)
+	} else {
+		let mant_corrected = mant & MANTISSA_MASK;
+		let exp_corrected = ((exp + EXPONENT_BIAS) << 52) as u64;
+		let sign = if is_negative { 1u64 } else { 0u64 } << 63;
+		let bits = sign | exp_corrected | mant_corrected;
+		f64::from_bits(bits)
 	}
 }
 
@@ -200,21 +301,77 @@ mod tests {
 	}
 
 	#[test]
-	fn test_f32_parts_normal() {
-		let (sign, mant, exp) = f32_parts(3.14159).unwrap();
+	fn test_f32_to_parts_normal() {
+		let (sign, mant, exp) = f32_to_parts(3.14159).unwrap();
 		assert!(!sign);
 		assert_eq!(exp, 1);
 		assert_eq!(mant, 0b1100_1001_0000_1111_1101_0000);
 	}
 
 	#[test]
-	fn test_f64_parts_normal() {
-		let (sign, mant, exp) = f64_parts(3.14159).unwrap();
+	fn test_f64_to_parts_normal() {
+		let (sign, mant, exp) = f64_to_parts(3.14159).unwrap();
 		assert!(!sign);
 		assert_eq!(exp, 1);
 		assert_eq!(
 			mant,
 			0b1_1001_0010_0001_1111_1001_1111_0000_0001_1011_1000_0110_0110_1110
 		);
+	}
+
+	#[test]
+	fn test_f32_from_parts_normal() {
+		let test_values = [1.0f32, -1.0f32, 3.14159f32, -3.14159f32];
+		for val in test_values {
+			let (sign, mant, exp) = f32_to_parts(val).unwrap();
+			let res = f32_from_parts(sign, mant, exp);
+			assert_eq!(res, val);
+		}
+	}
+
+	#[test]
+	fn test_f32_from_parts_subnormal() {
+		let test_values = [f32::from_bits(1), f32::from_bits(0x007FFFFF)];
+		for val in test_values {
+			let (sign, mant, exp) = f32_to_parts(val).unwrap();
+			let res = f32_from_parts(sign, mant, exp);
+			assert_eq!(res, val);
+		}
+	}
+
+	#[test]
+	fn test_f32_from_parts_special_cases() {
+		assert_eq!(f32_from_parts(false, 0, 0), 0.0f32);
+		assert_eq!(f32_from_parts(true, 0, 0), -0.0f32);
+		assert_eq!(f32_from_parts(false, 1, 128), f32::INFINITY);
+		assert_eq!(f32_from_parts(true, 1, 128), f32::NEG_INFINITY);
+	}
+
+	#[test]
+	fn test_f64_from_parts_normal() {
+		let test_values = [1.0f64, -1.0f64, 3.14159f64, -3.14159f64];
+		for val in test_values {
+			let (sign, mant, exp) = f64_to_parts(val).unwrap();
+			let res = f64_from_parts(sign, mant, exp);
+			assert_eq!(res, val);
+		}
+	}
+
+	#[test]
+	fn test_f64_from_parts_subnormal() {
+		let test_values = [f64::from_bits(1), f64::from_bits(0x000FFFFFFFFFFFFF)];
+		for val in test_values {
+			let (sign, mant, exp) = f64_to_parts(val).unwrap();
+			let res = f64_from_parts(sign, mant, exp);
+			assert_eq!(res, val);
+		}
+	}
+
+	#[test]
+	fn test_f64_from_parts_special_cases() {
+		assert_eq!(f64_from_parts(false, 0, 0), 0.0f64);
+		assert_eq!(f64_from_parts(true, 0, 0), -0.0f64);
+		assert_eq!(f64_from_parts(false, 1, 1024), f64::INFINITY);
+		assert_eq!(f64_from_parts(true, 1, 1024), f64::NEG_INFINITY);
 	}
 }

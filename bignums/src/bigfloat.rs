@@ -1,36 +1,41 @@
+mod add;
+mod bits;
+mod cmp;
 mod convert;
+mod div;
+mod mul;
 mod set_val;
+mod sub;
 
 use crate::bigint::BigInt;
 
 /// An arbitrary precision floating-point number.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 pub struct BigFloat {
 	// Representation: m * 2^e.
-	// The implicit binary point in the mantissa is after the leading 1 bit.
 	// The mantissa is normalized, i.e., it has no trailing zeros.
 	// Zero is represented by m = 0 and e = 0. m is never zero otherwise.
 	m: BigInt,
-	e: BigInt,
+	e: i64,
 }
 
 impl BigFloat {
 	pub const ZERO: Self = Self {
 		m: BigInt::ZERO,
-		e: BigInt::ZERO,
+		e: 0,
 	};
 
 	pub const ONE: Self = Self {
 		m: BigInt::ONE,
-		e: BigInt::ZERO,
+		e: 0,
 	};
 
 	pub const NEG_ONE: Self = Self {
 		m: BigInt::NEG_ONE,
-		e: BigInt::ZERO,
+		e: 0,
 	};
 
-	pub fn from_mantissa_exponent(mantissa: BigInt, exponent: BigInt) -> Self {
+	pub fn from_mantissa_exponent(mantissa: BigInt, exponent: i64) -> Self {
 		let mut res = Self {
 			m: mantissa,
 			e: exponent,
@@ -43,19 +48,19 @@ impl BigFloat {
 		&self.m
 	}
 
-	pub fn exponent(&self) -> &BigInt {
-		&self.e
+	pub fn exponent(&self) -> i64 {
+		self.e
 	}
 
-	pub fn inner(&self) -> (&BigInt, &BigInt) {
-		(&self.m, &self.e)
+	pub fn inner(&self) -> (&BigInt, i64) {
+		(&self.m, self.e)
 	}
 
-	pub unsafe fn inner_mut(&mut self) -> (&mut BigInt, &mut BigInt) {
+	pub unsafe fn inner_mut(&mut self) -> (&mut BigInt, &mut i64) {
 		(&mut self.m, &mut self.e)
 	}
 
-	pub fn into_inner(self) -> (BigInt, BigInt) {
+	pub fn into_inner(self) -> (BigInt, i64) {
 		(self.m, self.e)
 	}
 
@@ -65,16 +70,16 @@ impl BigFloat {
 
 	pub fn set_zero(&mut self) {
 		self.m.set_zero();
-		self.e.set_zero();
+		self.e = 0;
 	}
 
 	pub fn is_one(&self) -> bool {
-		self.m.is_one() && self.e.is_zero()
+		self.m.is_one() && self.e == 0
 	}
 
 	pub fn set_one(&mut self) {
 		self.m.set_one();
-		self.e.set_zero();
+		self.e = 0;
 	}
 
 	pub fn is_negative(&self) -> bool {
@@ -98,13 +103,17 @@ impl BigFloat {
 		self
 	}
 
+	pub fn is_integer(&self) -> bool {
+		!self.e.is_negative()
+	}
+
 	fn normalize(&mut self) {
 		if self.m.is_zero() {
-			self.e.set_zero();
+			self.e = 0;
 		} else {
 			let trailing_zeros = self.m.magnitude.trailing_zeros();
-			self.e += trailing_zeros;
-			self.m >>= trailing_zeros;
+			self.e = self.e.strict_add(i64::try_from(trailing_zeros).unwrap());
+			self.m.magnitude >>= trailing_zeros;
 		}
 	}
 }
