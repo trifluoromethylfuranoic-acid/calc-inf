@@ -4,6 +4,15 @@ use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 use crate::rational::Rational;
 
+impl Rational {
+	pub fn reciprocal(self) -> Rational {
+		let n = BigInt::from_sign_and_magnitude(self.is_negative(), self.d);
+		let d = self.n.unsigned_abs();
+
+		Rational::new(n, d)
+	}
+}
+
 impl Div<&Rational> for &Rational {
 	type Output = Rational;
 

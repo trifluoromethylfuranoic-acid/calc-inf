@@ -107,6 +107,17 @@ impl BigUInt {
 		}
 		res
 	}
+
+	/// Returns the bit at the given position, counting from the least significant bit.
+	pub fn bit(&self, pos: usize) -> bool {
+		let mult64 = pos / (u64::BITS as usize);
+		let rem64 = pos % (u64::BITS as usize);
+
+		self.data
+			.get(mult64)
+			.map(|&x| (x >> rem64) & 1u64 != 0)
+			.unwrap_or(false)
+	}
 }
 macro_rules! impl_shl {
 	($($t:ty),*) => {$(

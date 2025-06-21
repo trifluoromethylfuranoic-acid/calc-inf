@@ -4,6 +4,14 @@ use crate::bigfloat::BigFloat;
 use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 
+impl BigFloat {
+	pub fn mul_with_precision(&self, rhs: &BigFloat, prec: i64) -> BigFloat {
+		let mut res = self * rhs;
+		res.round_to_precision(prec);
+		res
+	}
+}
+
 impl Mul<&BigFloat> for &BigFloat {
 	type Output = BigFloat;
 

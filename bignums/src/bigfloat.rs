@@ -3,7 +3,9 @@ mod bits;
 mod cmp;
 mod convert;
 mod div;
+mod exp;
 mod mul;
+mod round;
 mod set_val;
 mod sub;
 

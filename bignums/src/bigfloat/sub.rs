@@ -1,4 +1,4 @@
-use core::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use core::ops::{Neg, Sub, SubAssign};
 
 use crate::bigfloat::BigFloat;
 use crate::bigint::BigInt;
@@ -16,6 +16,12 @@ impl Neg for BigFloat {
 impl BigFloat {
 	pub fn neg_in_place(&mut self) {
 		self.m.neg_in_place();
+	}
+
+	pub fn sub_with_precision(&self, rhs: &BigFloat, prec: i64) -> BigFloat {
+		let mut res = self - rhs;
+		res.round_to_precision(prec);
+		res
 	}
 }
 
