@@ -16,6 +16,14 @@ impl ParseIntError {
 			ParseIntError::Negative => ParseRationalError::InvalidDigit,
 		}
 	}
+
+	pub(crate) fn to_float_error(&self) -> ParseFloatError {
+		match self {
+			ParseIntError::Empty => ParseFloatError::Empty,
+			ParseIntError::InvalidDigit => ParseFloatError::InvalidDigit,
+			ParseIntError::Negative => ParseFloatError::InvalidDigit,
+		}
+	}
 }
 
 impl Display for ParseIntError {
@@ -96,6 +104,25 @@ impl Display for TryFromFloatError {
 				TryFromFloatError::Infinite => {
 					"infinity is not a valid floating-point number"
 				}
+			}
+		)
+	}
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub enum ParseFloatError {
+	Empty,
+	InvalidDigit,
+}
+
+impl Display for ParseFloatError {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		write!(
+			f,
+			"{}",
+			match self {
+				ParseFloatError::Empty => "cannot parse from empty string",
+				ParseFloatError::InvalidDigit => "invalid digit found in string",
 			}
 		)
 	}

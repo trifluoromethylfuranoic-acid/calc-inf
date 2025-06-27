@@ -5,6 +5,18 @@ use crate::error::TryFromFloatError;
 use crate::rational::Rational;
 use crate::{SetVal, TrySetVal, util};
 
+impl From<BigUInt> for BigFloat {
+	fn from(value: BigUInt) -> Self {
+		BigFloat::from_mantissa_exponent(BigInt::from(value), 0)
+	}
+}
+
+impl From<BigInt> for BigFloat {
+	fn from(value: BigInt) -> Self {
+		BigFloat::from_mantissa_exponent(value, 0)
+	}
+}
+
 macro_rules! impl_from {
 	($($t:ty),*) => {$(
 		impl From<$t> for BigFloat {

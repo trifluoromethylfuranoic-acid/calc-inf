@@ -5,6 +5,17 @@ use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 use crate::rational::Rational;
 
+impl BigFloat {
+	pub fn cmp_abs(&self, other: &BigFloat) -> Ordering {
+		match (self.is_zero(), other.is_zero()) {
+			(true, true) => Ordering::Equal,
+			(true, false) => Ordering::Less,
+			(false, true) => Ordering::Greater,
+			(false, false) => cmp_abs_non_zero(self, other),
+		}
+	}
+}
+
 impl PartialEq for BigFloat {
 	fn eq(&self, other: &Self) -> bool {
 		self.e == other.e && self.m == other.m
@@ -124,15 +135,10 @@ impl PartialOrd for BigFloat {
 impl Ord for BigFloat {
 	fn cmp(&self, other: &Self) -> Ordering {
 		match (self.is_negative(), other.is_negative()) {
-			(false, false) => match (self.is_zero(), other.is_zero()) {
-				(true, true) => Ordering::Equal,
-				(true, false) => Ordering::Less,
-				(false, true) => Ordering::Greater,
-				(false, false) => compare_abs(self, other),
-			},
+			(false, false) => self.cmp_abs(other),
 			(false, true) => Ordering::Greater,
 			(true, false) => Ordering::Less,
-			(true, true) => compare_abs(self, other).reverse(),
+			(true, true) => cmp_abs_non_zero(self, other).reverse(),
 		}
 	}
 }
@@ -179,7 +185,7 @@ macro_rules! impl_partial_ord {
 
 impl_partial_ord! { u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize }
 
-fn compare_abs(a: &BigFloat, b: &BigFloat) -> Ordering {
+fn cmp_abs_non_zero(a: &BigFloat, b: &BigFloat) -> Ordering {
 	let a_e_real = (a.e as i128) + (a.m.magnitude.ilog2() as i128);
 	let b_e_real = (b.e as i128) + (b.m.magnitude.ilog2() as i128);
 	Ord::cmp(&a_e_real, &b_e_real).then_with(|| match Ord::cmp(&a.e, &b.e) {

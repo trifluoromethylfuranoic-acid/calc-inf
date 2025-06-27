@@ -1,12 +1,16 @@
 mod add;
 mod bits;
 mod cmp;
+mod consts;
 mod convert;
 mod div;
-mod exp;
+mod log;
 mod mul;
+mod pow;
 mod round;
 mod set_val;
+mod sqrt;
+mod str;
 mod sub;
 
 use crate::bigint::BigInt;
@@ -117,5 +121,11 @@ impl BigFloat {
 			self.e = self.e.strict_add(i64::try_from(trailing_zeros).unwrap());
 			self.m.magnitude >>= trailing_zeros;
 		}
+	}
+}
+
+impl Default for BigFloat {
+	fn default() -> Self {
+		Self::ZERO
 	}
 }

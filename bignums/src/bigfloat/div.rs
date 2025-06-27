@@ -1,5 +1,9 @@
+use core::cmp::Ordering;
+use core::ops::Div;
+
 use crate::bigfloat::BigFloat;
 use crate::bigint::BigInt;
+use crate::biguint::DivRem;
 
 impl BigFloat {
 	/// Divides self by rhs. Absolute error < 2^-prec.
@@ -51,6 +55,39 @@ impl BigFloat {
 		}
 		est_n.round_to_precision(prec);
 		est_n
+	}
+
+	pub fn div_int(&self, rhs: &BigFloat) -> BigInt {
+		if rhs.is_zero() {
+			panic!("Cannot divide by zero");
+		}
+		match self.cmp_abs(rhs) {
+			Ordering::Less => return BigInt::ZERO,
+			Ordering::Equal => {
+				return if self.is_negative() == rhs.is_negative() {
+					BigInt::ONE
+				} else {
+					BigInt::NEG_ONE
+				};
+			}
+			Ordering::Greater => {}
+		}
+
+		let mut n_m = self.m.clone();
+		let mut d_m = rhs.m.clone();
+
+		match Ord::cmp(&self.e, &rhs.e) {
+			Ordering::Less => {
+				d_m <<= rhs.e - self.e;
+			}
+			Ordering::Equal => {}
+			Ordering::Greater => {
+				n_m <<= self.e - rhs.e;
+			}
+		};
+
+		let q_int = (&mut n_m).div(&mut d_m);
+		q_int
 	}
 }
 
@@ -144,5 +181,44 @@ mod tests {
 		print!("q = {q}\nq_rat={q_rat}\nepsilon={epsilon}\ndelta={delta}\n\n");
 
 		assert!(delta < epsilon, "|{q} - {q_rat}| = {delta} > {epsilon}")
+	}
+
+	#[test]
+	fn test_div_int() {
+		// Test positive numbers
+		let n = BigFloat::from(10);
+		let d = BigFloat::from(3);
+		test_div_int_helper(&n, &d);
+
+		// Test negative numbers
+		let n = BigFloat::from(-15);
+		let d = BigFloat::from(7);
+		test_div_int_helper(&n, &d);
+
+		// Test both negative numbers
+		let n = BigFloat::from(-20000);
+		let d = BigFloat::from(-3);
+		test_div_int_helper(&n, &d);
+
+		// Test division by zero should panic
+		let n = BigFloat::from(1);
+		let d = BigFloat::from(0);
+		assert!(std::panic::catch_unwind(|| n.div_int(&d)).is_err());
+
+		// Test when result is zero
+		let n = BigFloat::from(2);
+		let d = BigFloat::from(3);
+		assert_eq!(n.div_int(&d), BigInt::ZERO);
+	}
+
+	fn test_div_int_helper(n: &BigFloat, d: &BigFloat) {
+		let q = n.div_int(d);
+		let mut expected = &n.to_rational() / &d.to_rational();
+		let expected = if expected.is_negative() {
+			expected.ceil_to_int()
+		} else {
+			expected.floor_to_int()
+		};
+		assert_eq!(q, expected);
 	}
 }

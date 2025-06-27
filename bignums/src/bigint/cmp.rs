@@ -1,5 +1,6 @@
 use core::cmp::Ordering;
 
+use crate::bigfloat::BigFloat;
 use crate::bigint::BigInt;
 use crate::biguint::BigUInt;
 
