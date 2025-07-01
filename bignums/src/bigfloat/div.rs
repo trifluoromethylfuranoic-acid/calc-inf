@@ -9,7 +9,7 @@ impl BigFloat {
 	/// Divides self by rhs. Absolute error < 2^-prec.
 	pub fn div(&self, rhs: &BigFloat, prec: i64) -> BigFloat {
 		let r = rhs.reciprocal(prec + self.ilog2() + 1);
-		self.mul_with_precision(&r, prec)
+		self.mul_with_precision(&r, prec + 1)
 	}
 
 	/// Divides 1 by self. Absolute error < 2^-prec.
@@ -73,6 +73,46 @@ impl BigFloat {
 			Ordering::Greater => {}
 		}
 
+		let (mut n_m, mut d_m) = self.div_int_helper(rhs);
+
+		let q_int = (&mut n_m).div(&mut d_m);
+		q_int
+	}
+
+	pub fn div_rem(&self, rhs: &BigFloat) -> (BigInt, BigFloat) {
+		let q = self.div_int(rhs);
+		let n = &q * rhs;
+		(q, self - &n)
+	}
+
+	pub fn div_floor(&self, rhs: &BigFloat) -> BigInt {
+		if rhs.is_zero() {
+			panic!("Cannot divide by zero");
+		}
+		match self.cmp_abs(rhs) {
+			Ordering::Less => return BigInt::ZERO,
+			Ordering::Equal => {
+				return if self.is_negative() == rhs.is_negative() {
+					BigInt::ONE
+				} else {
+					BigInt::NEG_ONE
+				};
+			}
+			Ordering::Greater => {}
+		}
+
+		let (mut n_m, mut d_m) = self.div_int_helper(rhs);
+		let (q_int, _) = (&mut n_m).div_rem_floor(&mut d_m);
+		q_int
+	}
+
+	pub fn div_rem_floor(&self, rhs: &BigFloat) -> (BigInt, BigFloat) {
+		let q = self.div_floor(rhs);
+		let n = &q * rhs;
+		(q, self - &n)
+	}
+
+	fn div_int_helper(&self, rhs: &BigFloat) -> (BigInt, BigInt) {
 		let mut n_m = self.m.clone();
 		let mut d_m = rhs.m.clone();
 
@@ -84,15 +124,15 @@ impl BigFloat {
 			Ordering::Greater => {
 				n_m <<= self.e - rhs.e;
 			}
-		};
+		}
 
-		let q_int = (&mut n_m).div(&mut d_m);
-		q_int
+		(n_m, d_m)
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use core::str::FromStr;
 	use super::*;
 	use crate::biguint::BigUInt;
 	use crate::rational::Rational;
@@ -118,6 +158,9 @@ mod tests {
 		let small = BigFloat::from_mantissa_exponent(BigInt::from(1), -10);
 		test_reciprocal_helper(&small, 1024);
 
+		let small = BigFloat::from_str("0.000000000000001561").unwrap();
+		test_reciprocal_helper(&small, 1024);
+		
 		// Test should panic for zero
 		let zero = BigFloat::from(0);
 		assert!(std::panic::catch_unwind(|| zero.reciprocal(1024)).is_err());

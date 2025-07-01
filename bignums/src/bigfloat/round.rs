@@ -1,4 +1,5 @@
 use crate::bigfloat::BigFloat;
+use crate::bigint::BigInt;
 
 impl BigFloat {
 	/// Rounds the number s.t. the absolute error is less than 2^-prec.
@@ -80,6 +81,51 @@ impl BigFloat {
 
 	pub fn ceil(&mut self) {
 		self.ceil_to_precision(0);
+	}
+
+	pub fn trunc(&mut self) {
+		if self.is_negative() {
+			self.ceil();
+		} else {
+			self.floor();
+		}
+	}
+
+	pub fn round_to_int(&self) -> BigInt {
+		let mut x = self.clone();
+		x.round();
+		x.m << x.e
+	}
+
+	pub fn floor_to_int(&self) -> BigInt {
+		let mut x = self.clone();
+		x.floor();
+		x.m << x.e
+	}
+
+	pub fn ceil_to_int(&self) -> BigInt {
+		let mut x = self.clone();
+		x.ceil();
+		x.m << x.e
+	}
+
+	pub fn trunc_to_int(&self) -> BigInt {
+		let mut x = self.clone();
+		x.trunc();
+		x.m << x.e
+	}
+
+	pub fn fract(&self) -> BigFloat {
+		let mut whole = self.clone();
+		whole.floor();
+		self - &whole
+	}
+
+	pub fn trunc_fract(&self) -> (BigInt, BigFloat) {
+		let mut whole = self.clone();
+		whole.trunc();
+		let fract = (self - &whole).abs();
+		(whole.m << whole.e, fract)
 	}
 }
 

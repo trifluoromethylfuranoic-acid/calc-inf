@@ -3,6 +3,22 @@ use core::ops::{Div, Rem};
 use crate::bigint::BigInt;
 use crate::biguint::{BigUInt, DivRem};
 
+impl BigInt {
+	pub fn div_rem_floor(&mut self, d: &mut BigInt) -> (BigInt, BigInt) {
+		let (mut q, mut r) = self.div_rem(&mut *d);
+		if r.is_zero() {
+			return (q, r);
+		}
+
+		if q.is_negative() {
+			q -= 1;
+			r += &*d;
+		}
+
+		(q, r)
+	}
+}
+
 impl DivRem for &mut BigInt {
 	type Output = BigInt;
 
@@ -177,18 +193,18 @@ impl_div_and_rem! {
 	(&mut BigInt | i64),
 	(&mut BigInt | i128),
 	(&mut BigInt | isize),
-	(u8           | &BigInt),
-	(u16          | &BigInt),
-	(u32          | &BigInt),
-	(u64          | &BigInt),
-	(u128         | &BigInt),
-	(usize        | &BigInt),
-	(i8           | &BigInt),
-	(i16          | &BigInt),
-	(i32          | &BigInt),
-	(i64          | &BigInt),
-	(i128         | &BigInt),
-	(isize        | &BigInt),
+	(u8          | &BigInt),
+	(u16         | &BigInt),
+	(u32         | &BigInt),
+	(u64         | &BigInt),
+	(u128        | &BigInt),
+	(usize       | &BigInt),
+	(i8          | &BigInt),
+	(i16         | &BigInt),
+	(i32         | &BigInt),
+	(i64         | &BigInt),
+	(i128        | &BigInt),
+	(isize       | &BigInt),
 }
 
 #[cfg(test)]
@@ -214,6 +230,12 @@ mod tests {
 		let (q, r) = a.div_rem(&mut b);
 		assert_eq!(q, BigInt::from(-3));
 		assert_eq!(r, BigInt::from(10));
+
+		let mut a = BigInt::from(-100);
+		let mut b = BigInt::from(-30);
+		let (q, r) = a.div_rem(&mut b);
+		assert_eq!(q, BigInt::from(3));
+		assert_eq!(r, BigInt::from(-10));
 	}
 
 	#[test]

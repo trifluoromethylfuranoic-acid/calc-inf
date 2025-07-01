@@ -2,6 +2,10 @@ use crate::bigfloat::BigFloat;
 
 impl BigFloat {
 	pub fn ln2(prec: i64) -> BigFloat {
+		Self::ln2_underestimate(prec)
+	}
+
+	pub(crate) fn ln2_underestimate(prec: i64) -> BigFloat {
 		let mut k = 1i64;
 		let mut res = BigFloat::ZERO;
 		let working_prec = prec + prec.ilog2() as i64 + 16;
@@ -21,8 +25,9 @@ impl BigFloat {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
 	use core::str::FromStr;
+
+	use super::*;
 
 	#[test]
 	fn test_ln2() {

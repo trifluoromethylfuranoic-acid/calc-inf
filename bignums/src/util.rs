@@ -262,6 +262,23 @@ pub(crate) fn f64_from_parts(is_negative: bool, mut mant: u64, exp: i64) -> f64 
 	}
 }
 
+pub(crate) fn digit_to_ascii(d: u8, uppercase: bool) -> char {
+	match d {
+		0..=9 => (b'0' + d) as char,
+		10..=35 => ((if uppercase { b'A' } else { b'a' }) + (d - 10)) as char,
+		_ => panic!("invalid digit for radix"),
+	}
+}
+
+pub(crate) fn parse_ascii_digit(c: u8) -> Option<u8> {
+	match c {
+		b'0'..=b'9' => Some(c - b'0'),
+		b'a'..=b'z' => Some(c - b'a' + 10),
+		b'A'..=b'Z' => Some(c - b'A' + 10),
+		_ => None,
+	}
+}
+
 #[cfg(test)]
 use crate::biguint::BigUInt;
 use crate::error::TryFromFloatError;

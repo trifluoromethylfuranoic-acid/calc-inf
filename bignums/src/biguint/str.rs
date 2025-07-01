@@ -8,6 +8,7 @@ use crate::biguint::BigUInt;
 use crate::biguint::div::DivRem;
 use crate::biguint::mul::MulTo;
 use crate::error::ParseIntError;
+use crate::util::{digit_to_ascii, parse_ascii_digit};
 
 impl FromStr for BigUInt {
 	type Err = ParseIntError;
@@ -78,15 +79,6 @@ impl BigUInt {
 	}
 
 	pub(crate) fn parse_helper(src: &[u8], radix: u32) -> Result<Self, ParseIntError> {
-		fn parse_ascii_digit(c: u8) -> Option<u8> {
-			match c {
-				b'0'..=b'9' => Some(c - b'0'),
-				b'a'..=b'z' => Some(c - b'a' + 10),
-				b'A'..=b'Z' => Some(c - b'A' + 10),
-				_ => None,
-			}
-		}
-
 		assert!((2..=36).contains(&radix), "radix must be between 2 and 36");
 
 		if src.is_empty() {
@@ -115,14 +107,6 @@ impl BigUInt {
 	}
 
 	pub fn to_string_radix(&self, radix: u32, uppercase: bool) -> String {
-		fn digit_to_ascii(d: u8, uppercase: bool) -> char {
-			match d {
-				0..=9 => (b'0' + d) as char,
-				10..=35 => ((if uppercase { b'A' } else { b'a' }) + (d - 10)) as char,
-				_ => panic!("invalid digit for radix"),
-			}
-		}
-
 		assert!((2..=36).contains(&radix), "radix must be between 2 and 36");
 
 		if self.is_zero() {
