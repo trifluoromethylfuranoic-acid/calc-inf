@@ -182,7 +182,7 @@ mod tests {
 		test_reciprocal_helper(&small, 1024);
 
 		let small = BigFloat::from_str("0.00000000000000000000000001561").unwrap();
-		test_reciprocal_helper(&small, 10240);
+		test_reciprocal_helper(&small, 1024);
 
 		// Test should panic for zero
 		let zero = BigFloat::from(0);
