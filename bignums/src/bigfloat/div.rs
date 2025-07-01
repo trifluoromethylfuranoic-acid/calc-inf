@@ -35,26 +35,49 @@ impl BigFloat {
 		let mut n = BigInt::ONE << shift;
 		let mut d = self.m.clone();
 		let m_est = &mut n / &mut d;
-		let est_0 = BigFloat::from_mantissa_exponent(m_est, -self.e - shift as i64);
+		let est = BigFloat::from_mantissa_exponent(m_est, -self.e - shift as i64);
 
 		// Use Newton-Raphson method to correct estimate.
-		let log_epsilon = (&BigFloat::from(1) - &(self * &est_0)).ilog2() + 1;
+		// Need more precision to account for error from 3 sources: stopping after
+		// finitely many iterations, imprecise arithmetic and rounding the final result.
+		let actual_prec = prec + 2;
+
+		let log_epsilon = (&BigFloat::from(1) - &(self * &est)).ilog2() + 1;
 		debug_assert!(log_epsilon < 0, "bad estimate for reciprocal");
-		let target_prec = self.ilog2() - prec;
-		let mut current_prec = log_epsilon;
-		let mut est_n = est_0;
-		// Hopefully enough... 🙏
-		let working_prec = prec + 16;
-		// Loop until (ilog2(1 - self * est_0) + 1) * 2^n <= ilog2(self) - prec
-		while current_prec > target_prec {
-			// est_n+1 = est_n * (2 - self * est_n)
-			let prod = self.mul_with_precision(&est_n, working_prec);
-			let diff = BigFloat::from(2).sub_with_precision(&prod, working_prec);
-			est_n = est_n.mul_with_precision(&diff, working_prec);
-			current_prec *= 2;
+		let target_log_epsilon = self.ilog2() - actual_prec;
+		if log_epsilon < target_log_epsilon {
+			return est;
 		}
-		est_n.round_to_precision(prec);
-		est_n
+		
+		let q = target_log_epsilon / log_epsilon + 1;
+		// Estimated number of iterations. Log_epsilon roughly doubles each iteration.
+		let n = q.ilog2() as i64 + 2;
+		let log_s = self.ilog2();
+
+		let mut x = est;
+		// Hopefully enough... 🙏
+		let working_prec = actual_prec + n + i64::max(0, x.ilog2()) + 16;
+		let mut i = 0;
+		loop {
+			// x_n+1 = x_n * (2 - s * x_n)
+			let prod = self.mul_with_precision(&x, working_prec);
+
+			let delta = BigFloat::from(1).sub_with_precision(&prod, working_prec);
+
+			let diff = BigFloat::from(2).sub_with_precision(&prod, working_prec);
+			x = x.mul_with_precision(&diff, working_prec);
+
+			i += 1;
+
+			if delta.is_zero() || delta.ilog2() <= -actual_prec + log_s - 1 {
+				break;
+			}
+		}
+		#[cfg(test)]
+		println!("est_iter: {n}, actual_iter: {i}");
+
+		x.round_to_precision(actual_prec);
+		x
 	}
 
 	pub fn div_int(&self, rhs: &BigFloat) -> BigInt {
@@ -158,9 +181,9 @@ mod tests {
 		let small = BigFloat::from_mantissa_exponent(BigInt::from(1), -10);
 		test_reciprocal_helper(&small, 1024);
 
-		let small = BigFloat::from_str("0.000000000000001561").unwrap();
-		test_reciprocal_helper(&small, 1024);
-		
+		let small = BigFloat::from_str("0.00000000000000000000000001561").unwrap();
+		test_reciprocal_helper(&small, 10240);
+
 		// Test should panic for zero
 		let zero = BigFloat::from(0);
 		assert!(std::panic::catch_unwind(|| zero.reciprocal(1024)).is_err());
