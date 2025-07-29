@@ -1,5 +1,5 @@
-use alloc::string::{String, ToString};
-use core::fmt::{Debug, Display, Formatter};
+use alloc::string::String;
+use core::fmt::{Display, Formatter};
 use core::ops::Mul;
 use core::str::FromStr;
 
@@ -59,7 +59,7 @@ impl BigFloat {
 		radix: u32,
 		prec: i64,
 	) -> Result<Self, ParseFloatError> {
-		let (mut whole, fract) = src.split_once(|c| *c == b'.').unwrap_or((src, b"0"));
+		let (whole, fract) = src.split_once(|c| *c == b'.').unwrap_or((src, b"0"));
 
 		let is_negative = whole.get(0).copied() == Some(b'-');
 
@@ -114,8 +114,6 @@ impl BigFloat {
 
 #[cfg(test)]
 mod tests {
-	use alloc::string::ToString;
-
 	use super::*;
 
 	#[test]

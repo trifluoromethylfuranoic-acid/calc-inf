@@ -112,7 +112,7 @@ impl BigInt {
 		self.magnitude
 	}
 
-	fn normalize(&mut self) {
+	pub(crate) fn normalize(&mut self) {
 		if self.is_zero() {
 			self.is_negative = false;
 		}

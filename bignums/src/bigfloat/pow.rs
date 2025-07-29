@@ -6,28 +6,38 @@ impl BigFloat {
 			return BigFloat::ONE;
 		}
 
-		if self.is_negative() {
-			todo!()
+		todo!()
+	}
+
+	pub fn powi_with_precision(&self, pow: i64, prec: i64) -> BigFloat {
+		if self.is_zero() {
+			return BigFloat::ZERO;
+		}
+		if self.is_one() {
+			return BigFloat::ONE;
 		}
 
-		// At least self.ilog2() + 4
-		let ln2 = BigFloat::ln2_underestimate(self.ilog2() + 16);
-		// k is an overestimate, and at most by 1
-		let (k, r) = self.div_rem_floor(&ln2);
+		let working_prec = prec + 16;
 
-		let mut i = 0i64;
-		let mut res = BigFloat::ZERO;
-		let mut a = BigFloat::ONE;
+		let is_pow_negative = pow.is_negative();
+		let mut abs_pow = pow.unsigned_abs();
 
-		loop {
-			res += &a;
-			a *= &r;
-			a = a.div(&BigFloat::from(i), prec);
-			i += 1;
+		let mut res = BigFloat::ONE;
+		let mut power_of_self = self.clone();
+
+		while abs_pow != 0 {
+			if abs_pow & 1 == 1 {
+				res = res.mul_with_precision(&power_of_self, working_prec);
+			}
+			abs_pow >>= 1;
+			power_of_self = power_of_self.mul_with_precision(&power_of_self, working_prec);
 		}
 
-		res << i64::try_from(&k).expect("exponentiation would result in overflow");
+		if is_pow_negative {
+			res = res.reciprocal(working_prec);
+		}
 
+		res.round_to_precision(prec);
 		res
 	}
 }

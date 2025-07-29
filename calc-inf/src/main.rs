@@ -1,3 +1,5 @@
+mod lexer;
+
 extern crate iced;
 
 use std::fmt;
@@ -43,9 +45,13 @@ fn update(state: &mut State, message: Message) {
 
 fn view(state: &State) -> Element<Message> {
 	column![
-		text_editor(&state.input)
-			.on_action(Message::Edit)
-			.height(200),
+		row![
+			text_editor(&state.input)
+				.on_action(Message::Edit)
+				.height(100),
+			calc_button(CalcButton::Eval),
+		],
+		text(&state.ouptut).height(100),
 		row![
 			calc_button(CalcButton::Number(7)),
 			calc_button(CalcButton::Number(8)),
@@ -68,6 +74,7 @@ fn view(state: &State) -> Element<Message> {
 #[derive(Default)]
 struct State {
 	input: text_editor::Content,
+	ouptut: String,
 }
 
 #[derive(Debug, Clone)]

@@ -12,6 +12,7 @@ pub mod bigint;
 pub mod biguint;
 pub mod error;
 pub mod rational;
+pub mod real;
 mod util;
 
 /// Trait for setting the value of self to some other value

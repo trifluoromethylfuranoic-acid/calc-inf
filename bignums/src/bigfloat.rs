@@ -5,6 +5,7 @@ mod consts;
 mod convert;
 mod div;
 mod log;
+mod misc;
 mod mul;
 mod pow;
 mod round;

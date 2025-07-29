@@ -18,26 +18,12 @@ impl BigFloat {
 
 		let mut x = Self::est_sqrt(self.clone());
 
-		#[cfg(test)]
-		println!("Estimated sqrt: {x}");
-
-		let mut i = 0;
 		loop {
 			let q = self.div(&x, working_prec);
 			let delta = x.sub_with_precision(&q, working_prec);
 			x = x.add_with_precision(&q, working_prec) >> 1;
 
-			i += 1;
-			if delta.is_zero() || delta.ilog2() <= -actual_prec {
-				#[cfg(test)]
-				println!(
-					"Iterations: {i}, log2(delta): {0}",
-					if delta.is_zero() {
-						i64::MIN
-					} else {
-						delta.ilog2()
-					}
-				);
+			if delta.is_zero() || delta.ilog2() + 1 <= -actual_prec {
 				break;
 			}
 		}
@@ -62,7 +48,6 @@ impl BigFloat {
 #[cfg(test)]
 mod tests {
 	use core::ops::Sub;
-	use core::str::FromStr;
 
 	use super::*;
 

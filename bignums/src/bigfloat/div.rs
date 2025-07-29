@@ -3,7 +3,6 @@ use core::ops::Div;
 
 use crate::bigfloat::BigFloat;
 use crate::bigint::BigInt;
-use crate::biguint::DivRem;
 
 impl BigFloat {
 	/// Divides self by rhs. Absolute error < 2^-prec.
@@ -48,7 +47,7 @@ impl BigFloat {
 		if log_epsilon < target_log_epsilon {
 			return est;
 		}
-		
+
 		let q = target_log_epsilon / log_epsilon + 1;
 		// Estimated number of iterations. Log_epsilon roughly doubles each iteration.
 		let n = q.ilog2() as i64 + 2;
@@ -57,7 +56,7 @@ impl BigFloat {
 		let mut x = est;
 		// Hopefully enough... 🙏
 		let working_prec = actual_prec + n + i64::max(0, x.ilog2()) + 16;
-		let mut i = 0;
+
 		loop {
 			// x_n+1 = x_n * (2 - s * x_n)
 			let prod = self.mul_with_precision(&x, working_prec);
@@ -67,14 +66,10 @@ impl BigFloat {
 			let diff = BigFloat::from(2).sub_with_precision(&prod, working_prec);
 			x = x.mul_with_precision(&diff, working_prec);
 
-			i += 1;
-
 			if delta.is_zero() || delta.ilog2() <= -actual_prec + log_s - 1 {
 				break;
 			}
 		}
-		#[cfg(test)]
-		println!("est_iter: {n}, actual_iter: {i}");
 
 		x.round_to_precision(actual_prec);
 		x
@@ -156,6 +151,7 @@ impl BigFloat {
 #[cfg(test)]
 mod tests {
 	use core::str::FromStr;
+
 	use super::*;
 	use crate::biguint::BigUInt;
 	use crate::rational::Rational;

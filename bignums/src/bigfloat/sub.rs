@@ -47,6 +47,7 @@ impl Sub<&BigFloat> for &BigFloat {
 			rhs.m.magnitude <<= rhs.e - self.e;
 			rhs.e = self.e;
 			rhs.m -= &self.m;
+			rhs.neg_in_place();
 			rhs.normalize();
 			rhs
 		}

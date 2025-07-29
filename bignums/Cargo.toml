@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 smallvec = { version = "1.15.0", features = ["serde", "union", "const_generics", "const_new"] }
+dyn-clone = "1.0.19"
 
 [dev-dependencies]
 num-bigint = "0.4"

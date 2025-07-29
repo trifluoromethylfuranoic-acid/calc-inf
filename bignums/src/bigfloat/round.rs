@@ -23,6 +23,7 @@ impl BigFloat {
 		if round_up {
 			self.m.magnitude += 1;
 		}
+		self.m.normalize();
 
 		self.e = new_lsb_weight;
 		self.normalize();
