@@ -1,6 +1,14 @@
-use core::ops::{Sub, SubAssign};
+use core::ops::{Neg, Sub, SubAssign};
 
 use crate::real::Real;
+
+impl Neg for Real {
+	type Output = Real;
+
+	fn neg(self) -> Self::Output {
+		Real::new(move |prec| -self.eval(prec))
+	}
+}
 
 impl Sub<Real> for Real {
 	type Output = Real;

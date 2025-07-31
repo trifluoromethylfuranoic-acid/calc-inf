@@ -1,4 +1,6 @@
 mod lexer;
+mod parser;
+mod eval;
 
 extern crate iced;
 
@@ -7,8 +9,10 @@ use std::fmt::{Display, write};
 use std::sync::Arc;
 
 use iced::widget::text_editor::{Action, Edit};
-use iced::widget::{button, column, row, text, text_editor};
+use iced::widget::{button, column, row, text, text_editor, text_input};
 use iced::{Application, Element, Size, application, window};
+use crate::lexer::Lexer;
+use crate::parser::Parser;
 
 fn main() {
 	application("Calculator", update, view)
@@ -36,10 +40,16 @@ fn update(state: &mut State, message: Message) {
 			CalcButton::Number(n) => state
 				.input
 				.perform(Action::Edit(Edit::Paste(Arc::new(n.to_string())))),
-			CalcButton::Clear => {}
-			CalcButton::Eval => {}
+			CalcButton::Clear => {
+				state.input.perform(Action::SelectAll);
+				state.input.perform(Action::Edit(Edit::Backspace));
+			}
+			CalcButton::Eval => {
+				eval(&state.input.text(), &state.prec, &mut state.ouptut);
+			}
 		},
 		Message::Edit(action) => state.input.perform(action),
+		Message::EditPrec(prec) => state.prec = prec,
 	}
 }
 
@@ -49,7 +59,10 @@ fn view(state: &State) -> Element<Message> {
 			text_editor(&state.input)
 				.on_action(Message::Edit)
 				.height(100),
-			calc_button(CalcButton::Eval),
+			column![
+				text_input("1024", &state.prec).width(60).on_input(Message::EditPrec),
+				calc_button(CalcButton::Eval)
+			],
 		],
 		text(&state.ouptut).height(100),
 		row![
@@ -74,13 +87,15 @@ fn view(state: &State) -> Element<Message> {
 #[derive(Default)]
 struct State {
 	input: text_editor::Content,
+	prec: String,
 	ouptut: String,
 }
 
 #[derive(Debug, Clone)]
 enum Message {
 	ButtonPressed(CalcButton),
-	Edit(text_editor::Action),
+	Edit(Action),
+	EditPrec(String)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -111,4 +126,31 @@ fn calc_button(but: CalcButton) -> iced::widget::Button<'static, Message> {
 		.on_press(Message::ButtonPressed(but))
 		.width(60)
 		.height(70)
+}
+
+fn eval(input: &str, prec: &str, output: &mut String) {
+	output.clear();
+	let prec = prec.parse::<i64>().unwrap_or(1024);
+	
+	let tokens = Lexer(input).collect::<Vec<_>>();
+	let mut parser = Parser::new(&tokens);
+	let expr = match parser.parse() {
+		Err(err) => {
+			output.push_str(&err.to_string());
+			return;
+		},
+		Ok(expr) => expr,
+	};
+	
+	let res_str = std::panic::catch_unwind(|| {
+		match expr.eval(prec) {
+			Err(err) => err.to_string(),
+			Ok(expr) => expr.to_string(prec),
+		}
+	});
+	
+	match res_str {
+		Err(err) => output.push_str("Error"),
+		Ok(res) => output.push_str(&res),
+	}
 }

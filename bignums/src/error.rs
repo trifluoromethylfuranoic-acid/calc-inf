@@ -109,7 +109,7 @@ impl Display for TryFromFloatError {
 	}
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
 pub enum ParseFloatError {
 	Empty,
 	InvalidDigit,
